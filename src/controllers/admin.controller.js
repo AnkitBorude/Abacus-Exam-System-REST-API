@@ -31,11 +31,14 @@ const registerAdmin=asyncHandler(async (req,res)=>{
 });
 const loginAdmin=asyncHandler(async (req,res)=>{
     const{username,password}=req.body;
+
     let validParams=validatefields({username,password});
+
     if(validParams.parameterisNull)
     {
-        throw new Apierror(401,validParams.parameterName+" is / are null or undefined");
+        throw new Apierror(401,validParams.parameterName+" is are null or undefined");
     }
+
     let admin;//extracting the admin from the db
     try{
         admin=await Admin.findOne({username});
