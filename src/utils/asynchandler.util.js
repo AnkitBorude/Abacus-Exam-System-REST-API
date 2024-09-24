@@ -8,8 +8,9 @@ const asyncHandler=(fn)=>{
             res.status(error.statusCode || 500).json(
                 {
                     error:error.message,
-                    status:error.statusCode,
-                    timestamp:error.time
+                    statusCode:error.statusCode,
+                    timestamp:error.time,
+                    success:false
                 }
             )
         }
