@@ -21,6 +21,23 @@ const studentSchema= new mongoose.Schema({
     lowecase: true,
     trim: true, 
     },
+    level: {
+    type: String,
+    required: true
+    },
+    class: {
+    type: String,
+    required: true
+    },
+    phone_no: {
+    type: String,
+    validate: {
+        validator: function(v) {
+        return /\d{10}/.test(v);
+        },
+        message: props => `${props.value} is not a valid phone number!`
+        }
+    },
     password: {
         type: String,
         required: [true, 'Password is required']
