@@ -5,7 +5,7 @@ import Apiresponse from "../utils/apiresponse.util.js";
 import { Admin } from "../models/admin.model.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
 
-const registerAdmin=asyncHandler(async (req,res,next)=>{
+const registerAdmin=asyncHandler(async (req,res)=>{
     const{fullname,email,username,password}=req.body;
     let validParams=validatefields({fullname,email,username,password});
     if(validParams.parameterisNull)
