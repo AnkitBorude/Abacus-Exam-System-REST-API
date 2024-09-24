@@ -25,7 +25,7 @@ const studentSchema= new mongoose.Schema({
     type: String,
     required: true
     },
-    class: {
+    sclass: {
     type: String,
     required: true
     },

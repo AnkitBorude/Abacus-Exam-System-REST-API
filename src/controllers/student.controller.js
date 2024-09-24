@@ -19,7 +19,13 @@ const registerStudent=asyncHandler(async (req,res)=>{
     res.json(new Apiresponse("Student Registration Successfull",200));
     }catch(error)
     {
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
+            throw new Apierror(402,"Username already Exists");
+        }
+        else
+        {
         throw new Apierror(402,error.message);
+        }
     }
 
 });
