@@ -4,6 +4,7 @@ import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 import { Admin } from "../models/admin.model.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
+import signToken from "../utils/jwttoken.util.js";
 
 const registerAdmin=asyncHandler(async (req,res)=>{
     const{fullname,email,username,password}=req.body;
@@ -55,6 +56,9 @@ const loginAdmin=asyncHandler(async (req,res)=>{
     {
         throw new Apierror(405,"Wrong Password");
     }
-    res.status(200).json(new Apiresponse("Login Successfull",200));
+    //generating access token
+    const jwtToken=await signToken({userId:admin._id});
+
+    res.status(200).json(new Apiresponse({message:"Login Successfull",token:jwtToken},200));
 });
 export {registerAdmin,loginAdmin};
