@@ -17,7 +17,6 @@ const studentSchema= new mongoose.Schema({
     email: {
     type: String,
     required: true,
-    unique: true,
     lowecase: true,
     trim: true, 
     },
@@ -31,12 +30,7 @@ const studentSchema= new mongoose.Schema({
     },
     phone_no: {
     type: String,
-    validate: {
-        validator: function(v) {
-        return /\d{10}/.test(v);
-        },
-        message: props => `${props.value} is not a valid phone number!`
-        }
+    match:[ /^\d{10}$/]
     },
     password: {
         type: String,

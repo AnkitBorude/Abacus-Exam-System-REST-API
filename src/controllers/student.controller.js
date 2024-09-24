@@ -10,7 +10,7 @@ const registerStudent=asyncHandler(async (req,res)=>{
     let validParams=validatefields({fullname,email,username,level,sclass,phone_no,password});
     if(validParams.parameterisNull)
     {
-        throw new Apierror(401,validParams.parameterName+" is / are null or undefined");
+        throw new Apierror(401,validParams.parameterName+" is are null or undefined");
     }
 
     try{
@@ -21,6 +21,10 @@ const registerStudent=asyncHandler(async (req,res)=>{
     {
         if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
             throw new Apierror(402,"Username already Exists");
+        }
+        else if(error.name === 'ValidationError')
+        {
+            throw new Apierror(402,`The phone number is invalid. It must be exactly 10 digits.`);
         }
         else
         {
