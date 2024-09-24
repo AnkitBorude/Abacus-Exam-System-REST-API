@@ -4,6 +4,7 @@ import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 import { Student } from "../models/student.model.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
+import signToken from "../utils/jwttoken.util.js";
 
 const registerStudent=asyncHandler(async (req,res)=>{
     const{fullname,email,username,level,sclass,phone_no,password}=req.body;
@@ -51,13 +52,15 @@ const loginStudent=asyncHandler(async (req,res)=>{
     }
     if(!student)
     {
-        throw new Apierror(403,"Student account with provided credentials does not exists");
+        throw new Apierror(403,"Student username does not exists");
     }
     if(student.password!==password)
     {
         throw new Apierror(405,"Wrong Password");
     }
-    res.status(200).json(new Apiresponse("Login Successfull",200));
+    //adding jwt token
+    const token= await signToken({studentId:student._id});
+    res.status(200).json(new Apiresponse({message:"Login Successfull",token:token},200));
 });
 
 
