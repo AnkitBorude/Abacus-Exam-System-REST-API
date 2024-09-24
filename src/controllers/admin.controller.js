@@ -10,7 +10,7 @@ const registerAdmin=asyncHandler(async (req,res,next)=>{
     let validParams=validatefields({fullname,email,username,password});
     if(validParams.parameterisNull)
     {
-        throw new Apierror(401,validParams.parameterName+" is / are null or undefined");
+        throw new Apierror(401,validParams.parameterName+" is null or undefined");
     }
 
     try{
@@ -19,7 +19,13 @@ const registerAdmin=asyncHandler(async (req,res,next)=>{
     res.json(new Apiresponse("Admin Registration Successfull",200));
     }catch(error)
     {
+        if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
+            throw new Apierror(402,"Username already Exists");
+        }
+        else
+        {
         throw new Apierror(402,error.message);
+        }
     }
 
 });
