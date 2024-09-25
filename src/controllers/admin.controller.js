@@ -57,7 +57,7 @@ const loginAdmin=asyncHandler(async (req,res)=>{
         throw new Apierror(405,"Wrong Password");
     }
     //generating access token
-    const jwtToken=await signToken({userId:admin._id});
+    const jwtToken=await signToken({adminId:admin._id});
 
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:jwtToken},200));
 });
