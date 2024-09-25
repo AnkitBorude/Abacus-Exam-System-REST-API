@@ -1,15 +1,17 @@
 import jwt from "jsonwebtoken";
-import Apierror from "../utils/apierror.util";
+import Apierror from "../utils/apierror.util.js";
 const authMiddleware = (req, res, next) => {
     try
     {
     const token = req.header('Authorization')?.split(' ')[1];  // Expect "Bearer <token>"
     if (!token) {
-        throw new Apierror(401,"Authorization  token required");
+        throw new Apierror(401,"Authorization token required");
     }
         try{
-        const decoded = jwt.verify(token, JWT_SECRET);  // Verify token
-        req.user = decoded;  // Attach the decoded payload to the request object
+        const decoded = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);  // Verify token
+
+        //Adding retracted key as request attribute
+        req.id=decoded.studentId || decoded.adminId;  // Attach the decoded payload to the request object
         next();
         }catch(error)
         {
@@ -25,8 +27,6 @@ const authMiddleware = (req, res, next) => {
             }
         )
     }
-
-{
-
-}
 };
+
+export default authMiddleware;
