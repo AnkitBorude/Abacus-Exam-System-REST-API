@@ -42,4 +42,14 @@ const studentSchema= new mongoose.Schema({
     }
 },{timestamps:true});
 
+studentSchema.set("toJSON",{
+    transform:(doc,rec)=>{
+        delete rec._id;
+        delete rec.__v;
+        delete rec.createdAt;
+        delete rec.updatedAt;
+        delete rec.refreshToken;
+        return rec;
+    }
+})
 export const Student=mongoose.model("Student",studentSchema);
