@@ -43,7 +43,13 @@ const studentSchema= new mongoose.Schema({
 },{timestamps:true});
 
 studentSchema.set("toJSON",{
+    //doc: The original Mongoose document (before conversion). 
+    //This includes all the data and Mongoose-specific features (like methods and virtuals).
+    //ret: The plain JavaScript object (the result of converting the Mongoose document).
+    // This is the object that will be transformed and returned.
+
     transform:(doc,rec)=>{
+        //avoiding this value
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;
