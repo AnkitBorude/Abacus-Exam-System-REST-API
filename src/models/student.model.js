@@ -49,6 +49,7 @@ studentSchema.set("toJSON",{
         delete rec.createdAt;
         delete rec.updatedAt;
         delete rec.refreshToken;
+        delete rec.password;
         return rec;
     }
 })

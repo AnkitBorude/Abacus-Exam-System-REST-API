@@ -5,7 +5,6 @@ import Apiresponse from "../utils/apiresponse.util.js";
 import { Student } from "../models/student.model.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
 import signToken from "../utils/jwttoken.util.js";
-
 const registerStudent=asyncHandler(async (req,res)=>{
     const{fullname,email,username,level,sclass,phone_no,password}=req.body;
     let validParams=validatefields({fullname,email,username,level,sclass,phone_no,password});
@@ -59,9 +58,21 @@ const loginStudent=asyncHandler(async (req,res)=>{
         throw new Apierror(405,"Wrong Password");
     }
     //adding jwt token
-    const token= await signToken({studentId:student._id});
+    const token= await signToken({studentId:student._id.toString()});
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:token},200));
 });
 
+const getCurrentstudent=asyncHandler(async (req,res)=>{
 
-export {registerStudent,loginStudent};
+    try{
+        let student=await Student.findById(req.user);
+        student=student.toJSON();
+       return res.status(200).json(new Apiresponse(student,200));
+    }
+    catch(error)
+    {
+        throw new Apierror(441,error.message);
+    }
+});
+
+export {registerStudent,loginStudent,getCurrentstudent};
