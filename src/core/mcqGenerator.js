@@ -18,7 +18,9 @@ import OptionsGenerator from "./lib/OptionsGenerator.js";
 const mcqGenerator=(config,totalQuestions=1)=>{
     let i=0;
     let questions=[];
-    
+  
+    //validation
+    validateConfig(config);
 while(i<totalQuestions)
 {
   const queryString = expressionGenerator(config); //generating the question
@@ -41,5 +43,44 @@ while(i<totalQuestions)
   }
 }
 return questions;
+}
+
+const validateConfig=(config)=>{
+  if (typeof config !== 'object' || config === null) {
+    throw new Error('Invalid config: must be a non-null object.');
+  }
+
+  // Validate maxTerms (must be between 2 and 14)
+  if (config.maxTerms < 2 || config.maxTerms > 14) {
+    throw new Error('Invalid maxTerms: must be a number between 2 and 14.');
+  }
+
+  // Validate minNumber (must be greater than 1 and non-negative)
+  if (config.minNumber <= 1) {
+    throw new Error('Invalid minNumber: must be a number greater than 1 and non-negative.');
+  }
+
+  // Validate maxNumber (must be greater than or equal to minNumber and less than 1000)
+  if (config.maxNumber > config.minNumber || config.maxNumber >= 1000) {
+    throw new Error('Invalid maxNumber: must be a number greater than or equal to minNumber and less than 1000.');
+  }
+
+  // Validate operators (must only include "+", "-", "*", "/")
+  const allowableOperators = ["+", "-", "*", "/"];
+  if (!Array.isArray(config.operators) || config.operators.length === 0) {
+    throw new Error('Invalid operators: must be a non-empty array.');
+  }
+  
+  // Ensure all operators are valid
+  for (const operator of config.operators) {
+    if (typeof operator !== 'string' || !allowableOperators.includes(operator)) {
+      throw new Error(`Invalid operator: "${operator}" is not one of the allowed operators: ${allowableOperators.join(", ")}.`);
+    }
+  }
+
+  // Validate totalQuestions (must be greater than or equal to 1)
+  if (config.totalQuestions < 1) {
+    throw new Error('Invalid totalQuestions: must be a number greater than or equal to 1.');
+  }
 }
 export default mcqGenerator;
