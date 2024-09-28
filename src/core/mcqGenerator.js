@@ -1,6 +1,20 @@
 import expressionGenerator from "./lib/expressionGenerator.js";
 import evaluateExpression from "./lib/solveExpression.js";
 import OptionsGenerator from "./lib/OptionsGenerator.js";
+
+/**
+ * Generates multiple-choice questions (MCQs) based on the provided configuration.
+ * 
+ * @param {Object} config - The configuration object for generating MCQs.
+ * @param {number} config.maxTerms - The maximum number of terms in each question.
+ * @param {number} config.minNumber - The minimum value of numbers in each question.
+ * @param {number} config.maxNumber - The maximum value of numbers in each question.
+ * @param {string[]} config.operators - The allowed operators for the questions.
+ * @param {number} [totalQuestions=1] - The total number of MCQs to generate. Default is 1.
+ * 
+ * @returns {Object[]} - An array of objects representing the MCQs. Each object contains the question and possible answers.
+ */
+
 const mcqGenerator=(config,totalQuestions=1)=>{
     let i=0;
     let questions=[];
