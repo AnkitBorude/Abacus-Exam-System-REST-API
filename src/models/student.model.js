@@ -49,7 +49,7 @@ studentSchema.set("toJSON",{
     // This is the object that will be transformed and returned.
 
     transform:(doc,rec)=>{
-        //avoiding this value
+        //avoiding this value to be sent along the response back
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;

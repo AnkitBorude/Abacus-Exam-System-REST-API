@@ -61,4 +61,7 @@ const loginAdmin=asyncHandler(async (req,res)=>{
 
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:jwtToken},200));
 });
-export {registerAdmin,loginAdmin};
+const getCurrentAdmin=asyncHandler(async (req,res)=>{
+    
+});
+export {registerAdmin,loginAdmin,getCurrentAdmin};
