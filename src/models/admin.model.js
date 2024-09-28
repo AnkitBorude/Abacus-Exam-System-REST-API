@@ -30,4 +30,21 @@ const adminSchema= new mongoose.Schema({
     }
 },{timestamps:true});
 
+adminSchema.set("toJSON",{
+    //doc: The original Mongoose document (before conversion). 
+    //This includes all the data and Mongoose-specific features (like methods and virtuals).
+    //ret: The plain JavaScript object (the result of converting the Mongoose document).
+    // This is the object that will be transformed and returned.
+
+    transform:(doc,rec)=>{
+        //avoiding this value to be sent along the response back
+        delete rec._id;
+        delete rec.__v;
+        delete rec.createdAt;
+        delete rec.updatedAt;
+        delete rec.refreshToken;
+        delete rec.password;
+        return rec;
+    }
+})
 export const Admin=mongoose.model("Admin",adminSchema);

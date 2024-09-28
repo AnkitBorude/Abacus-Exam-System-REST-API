@@ -62,6 +62,15 @@ const loginAdmin=asyncHandler(async (req,res)=>{
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:jwtToken},200));
 });
 const getCurrentAdmin=asyncHandler(async (req,res)=>{
-    
+    try{
+        let admin=await Admin.findById(req.user);
+        admin=admin.toJSON();
+       return res.status(200).json(new Apiresponse(admin,200));
+    }
+    catch(error)
+    {
+        throw new Apierror(441,error.message);
+    }
+
 });
 export {registerAdmin,loginAdmin,getCurrentAdmin};
