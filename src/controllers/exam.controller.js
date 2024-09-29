@@ -31,10 +31,12 @@ const createExam=asyncHandler(async (req,res)=>{
         created_by:req.user,
         questions:questions
     });
-    
+
     const savedExam = await exam.save();
 
     return res.status(200).json(new Apiresponse(savedExam),200);
 });
+const deleteExam=asyncHandler(async (req,res)=>{
 
+});
 export {createExam};
