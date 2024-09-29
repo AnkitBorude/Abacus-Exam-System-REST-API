@@ -19,7 +19,10 @@ const examSchema = new mongoose.Schema({
   },
   total_marks: {
     type: Number,
-    required: true
+  },
+  total_marks_per_question: {
+    type: Number,
+    default:1
   },
   is_active: {
     type: Boolean,
