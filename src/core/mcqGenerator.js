@@ -15,7 +15,7 @@ import OptionsGenerator from "./lib/OptionsGenerator.js";
  * @returns {Object[]} - An array of objects representing the MCQs. Each object contains the question and possible answers.
  */
 
-const mcqGenerator=(config,totalQuestions=1)=>{
+const mcqGenerator=(config,totalQuestions=1,marks=1)=>{
     let i=0;
     let questions=[];
   
@@ -32,10 +32,11 @@ while(i<totalQuestions)
     let options=OptionsGenerator(expressionAnswer);//generating nearby options with one answer putten randomly
     let questionObj={
       question:queryString,
-      option_1:options[0],
-      option_2:options[1],
-      option_3:options[2],
-      option_4:options[3],
+      option_a:options[0],
+      option_b:options[1],
+      option_c:options[2],
+      option_d:options[3],
+      marks:marks,
       answer:expressionAnswer
     }
     questions.push(questionObj);
