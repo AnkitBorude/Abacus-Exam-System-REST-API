@@ -1,4 +1,4 @@
-const mongoose = require('mongoose');
+import mongoose from 'mongoose';
 import { questionSchema } from './question.model.js';
 const examSchema = new mongoose.Schema({
   title: {
