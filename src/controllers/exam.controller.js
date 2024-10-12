@@ -34,9 +34,18 @@ const createExam=asyncHandler(async (req,res)=>{
 
     const savedExam = await exam.save();
 
-    return res.status(200).json(new Apiresponse(savedExam),200);
+    return res.status(200).json(new Apiresponse("Exam Created Successfully"),200);
+});
+
+//returns all the exams created by the admin
+const getAdminExams=asyncHandler(async(req,res)=>{
+
+});
+//return all the exams matching the level of that student
+const getStudentExams=asyncHandler(async(req,res)=>{
+
 });
 const deleteExam=asyncHandler(async (req,res)=>{
 
 });
-export {createExam};
+export {createExam,getStudentExams,getAdminExams};

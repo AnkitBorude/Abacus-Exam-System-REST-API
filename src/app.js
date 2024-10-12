@@ -14,4 +14,8 @@ app.use("/api/v1/student",studentRouter);
 app.use("/api/v1/admin",adminRouter);
 app.use("/api/v1/exam",examRouter);
 app.use("/api/v1/result",resultRouter);
+
+app.get('/api/v1/echo', (req, res) => {
+    res.json({echoed:true});
+  })
 export {app};

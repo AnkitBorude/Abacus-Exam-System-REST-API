@@ -22,10 +22,6 @@ const registerStudent=asyncHandler(async (req,res)=>{
         if (error.code === 11000 && error.keyPattern && error.keyPattern.username) {
             throw new Apierror(402,"Username already Exists");
         }
-        else if(error.name === 'ValidationError')
-        {
-            throw new Apierror(402,`The phone number is invalid. It must be exactly 10 digits.`);
-        }
         else
         {
         throw new Apierror(402,error.message);
