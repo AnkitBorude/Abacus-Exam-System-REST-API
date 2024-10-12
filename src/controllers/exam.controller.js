@@ -4,6 +4,7 @@ import Apiresponse from "../utils/apiresponse.util.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
 import { Exam } from "../models/exam.model.js";
 import mcqGenerator from "../core/mcqGenerator.js";
+import { Student } from "../models/student.model.js";
 
 const createExam=asyncHandler(async (req,res)=>{
 
@@ -37,15 +38,41 @@ const createExam=asyncHandler(async (req,res)=>{
     return res.status(200).json(new Apiresponse("Exam Created Successfully"),200);
 });
 
-//returns all the exams created by the admin
-const getAdminExams=asyncHandler(async(req,res)=>{
+//returns all the exams created by the admin and student by level
+const getExams=asyncHandler(async(req,res)=>{
 
+    let exam;
+    if(req.role=="admin")
+    {
+        exam=await Exam.find({created_by:req.user});
+        if(exam.length==0)
+            {
+                throw new Apierror(455,"No Exam Found for admin");
+            }
+    }
+    else
+    {
+        let student=await Student.findById(req.user);
+        let studentLevel=student.level;
+        exam=await Exam.find({level:studentLevel});
+        if(exam.length==0)
+        {
+            throw new Apierror(456,"No Matching Exam Found with level "+studentLevel);
+        }
+    }
+    const transformedExams = exam.map(e => e.toJSON());
+    return res.status(200).json(new Apiresponse(transformedExams,200));
 });
-//return all the exams matching the level of that student
-const getStudentExams=asyncHandler(async(req,res)=>{
 
+const getQuestions=asyncHandler(async(req,res)=>{
+    const examId = req.params.examId;
+    let exam=await Exam.findById(examId);
+    let questions=exam.questions;
+    let transformedQuestions = questions.map(q => q.toJSON());
+
+    return res.status(200).json(new Apiresponse(transformedQuestions,200));
 });
 const deleteExam=asyncHandler(async (req,res)=>{
 
 });
-export {createExam,getStudentExams,getAdminExams};
+export {createExam,getExams,getQuestions};

@@ -32,5 +32,15 @@ const examSchema = new mongoose.Schema({
   questions: [questionSchema]
 }, { timestamps: true });
 
+examSchema.set('toJSON',{
+  transform:(doc,rec)=>{
+    rec.id=rec._id.toString();
+    delete rec.__v;
+    delete rec.questions;
+    delete rec._id;
+    delete rec.updatedAt;
+    return rec;
+  }
+})
 export const Exam = mongoose.model('Exam', examSchema);
 

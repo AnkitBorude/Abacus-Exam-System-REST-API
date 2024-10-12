@@ -31,5 +31,14 @@ const questionSchema = new mongoose.Schema({
   }
 });
 
+questionSchema.set("toJSON",{
+
+  transform:(doc,rec)=>{
+
+    delete rec._id;
+
+    return rec;
+}
+});
 const Question = new mongoose.model('Question',questionSchema);
 export {Question,questionSchema};
