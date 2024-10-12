@@ -54,7 +54,7 @@ const loginStudent=asyncHandler(async (req,res)=>{
         throw new Apierror(405,"Wrong Password");
     }
     //adding jwt token
-    const token= await signToken({studentId:student._id.toString()});
+    const token= await signToken({studentId:student._id.toString(),role:"student"});
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:token},200));
 });
 

@@ -11,7 +11,8 @@ const authMiddleware = (req, res, next) => {
         const decoded = jwt.verify(token,process.env.ACCESS_TOKEN_SECRET);  // Verify token
 
         //Adding retracted key as request attribute
-        req.user=decoded.studentId || decoded.adminId;  // Attach the decoded payload to the request object
+        req.user=decoded.studentId || decoded.adminId;
+        req.role=decoded.role;  // Attach the decoded payload to the request object
         next();
         }catch(error)
         {
