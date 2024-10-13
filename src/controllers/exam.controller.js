@@ -54,7 +54,7 @@ const getExams=asyncHandler(async(req,res)=>{
     {
         let student=await Student.findById(req.user);
         let studentLevel=student.level;
-        exam=await Exam.find({level:studentLevel});
+        exam=await Exam.find({level:studentLevel}).populate('created_by','fullname');
         if(exam.length==0)
         {
             throw new Apierror(456,"No Matching Exam Found with level "+studentLevel);
