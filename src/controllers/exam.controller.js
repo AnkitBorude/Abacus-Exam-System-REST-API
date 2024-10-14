@@ -72,7 +72,16 @@ const getQuestions=asyncHandler(async(req,res)=>{
 
     return res.status(200).json(new Apiresponse(transformedQuestions,200));
 });
+
+const activateExam=asyncHandler(async(req,res)=>{
+    const examId = req.params.examId;
+    let exam=await Exam.findByIdAndUpdate(examId,{is_active:true},{new:true});
+    if (!exam) {
+        throw new Apierror(457,'Exam not found');
+      }
+      return res.status(200).json(new Apiresponse("Exam Activated Successfully"));
+});
 const deleteExam=asyncHandler(async (req,res)=>{
 
 });
-export {createExam,getExams,getQuestions};
+export {createExam,getExams,getQuestions,activateExam};
