@@ -45,7 +45,6 @@ const getExams=asyncHandler(async(req,res)=>{
     let exam;
     if(req.role=="admin")
     {
-        console.log(req.user);
         exam=await Exam.aggregate(
             [
                 {
@@ -145,7 +144,16 @@ const activateExam=asyncHandler(async(req,res)=>{
       }
       return res.status(200).json(new Apiresponse("Exam Activated Successfully"));
 });
+const deactivateExam=asyncHandler(async(req,res)=>{
+  const examId = req.params.examId;
+  let exam=await Exam.findByIdAndUpdate(examId,{is_active:false},{new:true});
+  if (!exam) {
+      throw new Apierror(458,'Exam not found');
+    }
+    return res.status(200).json(new Apiresponse("Exam Deactivated Successfully"));
+});
+
 const deleteExam=asyncHandler(async (req,res)=>{
 
 });
-export {createExam,getExams,getQuestions,activateExam};
+export {createExam,getExams,getQuestions,activateExam,deactivateExam};
