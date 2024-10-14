@@ -5,7 +5,7 @@ import { validatefields } from "../utils/validatereqfields.util.js";
 import { Exam } from "../models/exam.model.js";
 import mcqGenerator from "../core/mcqGenerator.js";
 import { Student } from "../models/student.model.js";
-
+import mongoose from "mongoose";
 const createExam=asyncHandler(async (req,res)=>{
 
     const {maxTerms, minNumber, maxNumber, operators,total_questions}=req.body;
@@ -41,14 +41,77 @@ const createExam=asyncHandler(async (req,res)=>{
 //returns all the exams created by the admin and student by level
 const getExams=asyncHandler(async(req,res)=>{
 
+    let transformedExams;
     let exam;
     if(req.role=="admin")
     {
-        exam=await Exam.find({created_by:req.user});
+        console.log(req.user);
+        exam=await Exam.aggregate(
+            [
+                {
+                $match: { created_by: new mongoose.Types.ObjectId(req.user) } // Convert req.user to ObjectId
+              }
+              ,{
+                 $lookup: {
+                   from: 'results',
+                   localField: '_id',
+                   foreignField: 'exam',
+                   as: 'results'
+                 }
+               },
+               {
+                 $unwind: {
+                   path: '$results',
+                   preserveNullAndEmptyArrays: true // To handle exams with no results
+                 }
+               },
+               {
+                 $lookup: {
+                   from: 'students',
+                   localField: 'results.student',
+                   foreignField: '_id',
+                   as: 'student'
+                 }
+               },
+               {
+                 $group: {
+                   _id: '$_id', // Group by exam ID
+                   exam: { $first: '$$ROOT' }, // Keep all exam fields
+                   total_attended: { $sum: { $cond: [{ $ifNull: ['$results', false] }, 1, 0] } }, // Count results
+                   highest_score: { $max: '$results.score' }, // Find the highest score
+                   students: { $addToSet: '$results.student' } // Gather unique students
+                 }
+               },
+               {
+                 $addFields: {
+                   'exam.total_attended': '$total_attended',
+                   'exam.highest_score': '$highest_score',
+                   'exam.unique_students':{$size:'$students'},
+                   'exam.id':'$_id'
+                 }
+               },
+               {
+                 $project: {
+                   'exam.students': 0, // Optional: Exclude students field
+                   'exam.results': 0,
+                   'exam.student':0,
+                   'exam.questions':0,
+                   'exam._id':0,
+                   'exam.__v':0,
+                   'exam.created_by':0,
+                   'exam.updatedAt':0/// Optional: Exclude results field
+                 }
+               },
+               {
+                 $replaceRoot: { newRoot: '$exam' } // Flatten the structure to return the exam fields
+               }
+             ]
+        );
         if(exam.length==0)
             {
                 throw new Apierror(455,"No Exam Found for admin");
             }
+        transformedExams=exam;
     }
     else
     {
@@ -59,8 +122,9 @@ const getExams=asyncHandler(async(req,res)=>{
         {
             throw new Apierror(456,"No Matching Exam Found with level "+studentLevel);
         }
+        transformedExams = exam.map(e => e.toJSON());
     }
-    const transformedExams = exam.map(e => e.toJSON());
+    
     return res.status(200).json(new Apiresponse(transformedExams,200));
 });
 
