@@ -10,4 +10,5 @@ examRouter.route("/:examId/activate").post(authMiddleware,activateExam);
 examRouter.route("/:examId/deactivate").post(authMiddleware,deactivateExam);
 examRouter.route("/:examId/results").get(authMiddleware,getResults);
 examRouter.route("/:examId/students").get(authMiddleware,getStudents);
+examRouter.route("/:examId/students/:studentId/results").get(authMiddleware,getResults);
 export {examRouter};

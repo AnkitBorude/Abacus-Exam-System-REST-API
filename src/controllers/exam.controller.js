@@ -159,9 +159,13 @@ const deleteExam=asyncHandler(async (req,res)=>{
 });
 
 const getResults=asyncHandler(async(req,res)=>{
+ 
   let studentId=req.user;
   let examId=req.params.examId;
-
+  if(req.role=="admin"){
+    studentId=req.params.studentId;
+  }
+  
   let results=await Result.aggregate([
     {
       $match:{student: new mongoose.Types.ObjectId(studentId),
@@ -201,8 +205,8 @@ const getResults=asyncHandler(async(req,res)=>{
     }
 
     return res.status(200).json(new Apiresponse(results,200));
-
-});
+}
+);
 
 const getStudents=asyncHandler(async(req,res)=>{
 
@@ -251,4 +255,5 @@ const getStudents=asyncHandler(async(req,res)=>{
 
     return res.status(200).json(new Apiresponse(students,200));
 });
+
 export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults,getStudents};
