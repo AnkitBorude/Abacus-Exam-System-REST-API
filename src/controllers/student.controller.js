@@ -3,6 +3,7 @@ import asyncHandler from "../utils/asynchandler.util.js";
 import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 import { Student } from "../models/student.model.js";
+import {Result} from "../models/result.model.js"
 import { validatefields } from "../utils/validatereqfields.util.js";
 import signToken from "../utils/jwttoken.util.js";
 const registerStudent=asyncHandler(async (req,res)=>{
@@ -70,5 +71,4 @@ const getCurrentstudent=asyncHandler(async (req,res)=>{
         throw new Apierror(441,error.message);
     }
 });
-
 export {registerStudent,loginStudent,getCurrentstudent};
