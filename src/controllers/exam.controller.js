@@ -203,4 +203,52 @@ const getResults=asyncHandler(async(req,res)=>{
     return res.status(200).json(new Apiresponse(results,200));
 
 });
-export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults};
+
+const getStudents=asyncHandler(async(req,res)=>{
+
+  let examId=req.params.examId;
+
+  let students=await Result.aggregate(
+    [{
+        $match:{exam:new mongoose.Types.ObjectId(examId)}
+     }
+      ,{
+        $lookup:
+        {
+          from: "students",
+          localField:"student",
+          foreignField:"_id",
+          as: "student"
+        }
+      },
+      {
+        $unwind:{
+          path:"$student"
+          }
+      },
+      {
+        $group:{
+          _id: "$student._id",
+         documents: { $first: "$$ROOT" }
+        }
+      },
+      {
+        $project:{
+          student_id:"$documents.student._id",
+          student_name:"$documents.student.fullname",
+          student_email:"$documents.student.email",
+          student_level:"$documents.student.level",
+          student_class:"$documents.student.sclass",
+          student_phoneno:"$documents.student.phone_no",
+       }
+      }
+    ]
+  );
+  if(students.length==0)
+    {
+        throw new Apierror(456,"No Student Found");
+    }
+
+    return res.status(200).json(new Apiresponse(students,200));
+});
+export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults,getStudents};
