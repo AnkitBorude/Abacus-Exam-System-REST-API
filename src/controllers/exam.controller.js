@@ -6,6 +6,7 @@ import { Exam } from "../models/exam.model.js";
 import mcqGenerator from "../core/mcqGenerator.js";
 import { Student } from "../models/student.model.js";
 import mongoose from "mongoose";
+import { Result } from "../models/result.model.js";
 const createExam=asyncHandler(async (req,res)=>{
 
     const {maxTerms, minNumber, maxNumber, operators,total_questions}=req.body;
@@ -156,4 +157,50 @@ const deactivateExam=asyncHandler(async(req,res)=>{
 const deleteExam=asyncHandler(async (req,res)=>{
 
 });
-export {createExam,getExams,getQuestions,activateExam,deactivateExam};
+
+const getResults=asyncHandler(async(req,res)=>{
+  let studentId=req.user;
+  let examId=req.params.examId;
+
+  let results=await Result.aggregate([
+    {
+      $match:{student: new mongoose.Types.ObjectId(studentId),
+        exam:new mongoose.Types.ObjectId(examId)}
+    },
+    {
+    $lookup:{
+      from: "exams",
+      localField:"exam",
+      foreignField:"_id" ,
+      as: "exam"
+    }
+  },
+    {
+      $addFields:{
+        exam_name:{$arrayElemAt:["$exam.title",0]},
+        exam_duration:{$arrayElemAt:["$exam.duration",0]},
+        exam_level:{$arrayElemAt:["$exam.level",0]},
+        exam_total_question:{$arrayElemAt:["$exam.total_questions",0]},
+        exam_marks:{$arrayElemAt:["$exam.total_marks",0]}
+        
+      }
+    },
+    {
+      $project:
+        {
+          student:0,
+          exam:0,
+          __v:0
+        }
+    }
+  ]);
+
+  if(results.length==0)
+    {
+        throw new Apierror(456,"No Result Found");
+    }
+
+    return res.status(200).json(new Apiresponse(results,200));
+
+});
+export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults};
