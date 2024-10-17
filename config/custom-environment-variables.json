@@ -1,0 +1,9 @@
+{
+    "AccessToken" : {
+            "secret":"ACCESS_TOKEN_SECRET",
+            "expiry":"ACCESS_TOKEN_EXPIRY"
+        },
+    "Database":{
+        "URI":"MONGODB_CONNECTION_URL"
+    }
+}

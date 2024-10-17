@@ -8,7 +8,7 @@ import {app} from "./app.js";
 import { getConnection } from "./db/db.connection.js";
 import { startLocalmongoDBserver } from "./utils/localhost-mongodb.start.js";
 import os from 'node:os';
-
+import config from 'config';
 try{
 
     console.log("Starting Server Initialization...");
@@ -16,7 +16,7 @@ try{
     if(result.error){throw new Error("Error while loading enviroment variables")}
   
       logServerStart();
-      
+      console.log(config.get("Application.Port"));
       console.log('Database Connection Initialization');
       console.log('='.repeat(50));
 

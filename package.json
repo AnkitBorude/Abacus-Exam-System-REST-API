@@ -4,13 +4,15 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./src/index.js"
+    "start": "node ./src/index.js",
+    "dev": "NODE_ENV=developement node ./src/index.js"
   },
   "author": "",
   "license": "ISC",
   "description": "",
   "type": "module",
   "dependencies": {
+    "config": "^3.3.12",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "jsonwebtoken": "^9.0.2",
