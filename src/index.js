@@ -1,9 +1,7 @@
-//initializing the enviroment variables
 import dotenv from "dotenv";
 const result=dotenv.config({
     override:true
 });
-
 import {app} from "./app.js";
 import { getConnection } from "./db/db.connection.js";
 import { startLocalmongoDBserver } from "./utils/localhost-mongodb.start.js";
@@ -12,25 +10,33 @@ import config from 'config';
 try{
 
     console.log("Starting Server Initialization...");
-    if(!process.env.APPLICATION_PORT){throw new Error("Enviroment variable Application Port not found");}
-    if(result.error){throw new Error("Error while loading enviroment variables")}
-  
+   
+    console.log(config);
       logServerStart();
-      console.log(config.get("Application.Port"));
-      console.log('Database Connection Initialization');
+      //
       console.log('='.repeat(50));
 
-          //start localhost mongodb service
-      await startLocalmongoDBserver();
+          //start localhost mongodb service 
+          if(config.util.getEnv('NODE_ENV')=="development")
+          {
+           
+            console.log("Development Server: Executing MongoDB  service startup script")
+            await startLocalmongoDBserver();
+          }
+          else
+          {
+            console.log("Production Server: Manually Attempt to start MongoDB server");
+          }
+      
           //connecting to database
       await getConnection();
       
       console.log('='.repeat(50));
     
     
-    app.listen(process.env.APPLICATION_PORT,()=>{
-        console.log(`Server is running on port ${process.env.APPLICATION_PORT}`);
-      console.log(`http://localhost:${process.env.APPLICATION_PORT}`);
+    app.listen(config.get("Application.Port"),()=>{
+        console.log(`Server is running on port ${config.get("Application.Port")}`);
+      console.log(`http://localhost:${config.get("Application.Port")}`);
       console.log('-'.repeat(50));
      
     })

@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node ./src/index.js",
-    "dev": "NODE_ENV=developement node ./src/index.js"
+    "dev": "node ./src/index.js",
+    "dev1":"bash -c 'source .env && NODE_ENV=development node ./src/index.js'"
   },
   "author": "",
   "license": "ISC",
