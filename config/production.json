@@ -1,5 +1,8 @@
 {
     "Application":{
-        "Port":80
+        "Port":3000
+    },
+    "DB":{
+        "name":"AbacusExam"
     }
 }
