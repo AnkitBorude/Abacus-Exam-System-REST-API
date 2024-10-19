@@ -6,7 +6,7 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "NODE_ENV=production node ./src/index.js",
     "dev": "node ./src/index.js",
-    "dev1":"bash -c 'source .env && NODE_ENV=development node ./src/index.js'"
+    "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'"
   },
   "author": "",
   "license": "ISC",
@@ -16,6 +16,7 @@
     "config": "^3.3.12",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "helmet": "^8.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.5.3",
     "random-js": "^2.1.0"
