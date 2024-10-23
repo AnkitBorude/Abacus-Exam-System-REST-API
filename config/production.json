@@ -4,5 +4,8 @@
     },
     "DB":{
         "name":"AbacusExam"
+    },
+    "Password":{
+        "saltingRounds":11
     }
 }

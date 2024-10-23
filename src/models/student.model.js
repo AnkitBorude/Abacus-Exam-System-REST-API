@@ -1,4 +1,6 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import config from "config";
 import { MAX_USERNAME_LENGTH,MIN_USERNAME_LENGTH } from "../constants.js";
 const studentSchema= new mongoose.Schema({
     fullname:{
@@ -58,5 +60,16 @@ studentSchema.set("toJSON",{
         delete rec.password;
         return rec;
     }
-})
+});
+
+studentSchema.pre("save",async function(next){
+    try{
+    this.password= await bcrypt.hash(this.password,config.get("Password.saltingRounds"));
+    next();
+    }
+    catch(error)
+    {
+        next(error);
+    }
+});
 export const Student=mongoose.model("Student",studentSchema);

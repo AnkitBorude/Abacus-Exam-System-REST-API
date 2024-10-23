@@ -4,5 +4,8 @@
     },
     "DB":{
         "name":"CodingExam"
+    },
+    "Password":{
+        "saltingRounds":2
     }
 }
