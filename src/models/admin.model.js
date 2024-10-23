@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import config from "config";
+
 const adminSchema= new mongoose.Schema({
     fullname:{
         type:String,
@@ -46,5 +49,26 @@ adminSchema.set("toJSON",{
         delete rec.password;
         return rec;
     }
-})
+});
+adminSchema.pre("save",async function(next){
+    try{
+        if (!this.isModified('password')) {
+            return next();
+        }
+    this.password= await bcrypt.hash(this.password,config.get("Password.saltingRounds"));
+    next();
+    }
+    catch(error)
+    {
+        return next(error);
+    }
+});
+
+adminSchema.methods.comparePassword= async function(password) {
+    try {
+        return await bcrypt.compare(password, this.password);
+      } catch (error) {
+        throw error;
+      }
+};
 export const Admin=mongoose.model("Admin",adminSchema);

@@ -52,9 +52,13 @@ const loginAdmin=asyncHandler(async (req,res)=>{
     {
         throw new Apierror(403,"Admin account with provided credentials does not exists");
     }
-    if(admin.password!==password)
+   //comparing password
+   if(! await admin.comparePassword(password))
     {
-        throw new Apierror(405,"Wrong Password");
+        if(admin.password!=password)//implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
+        {
+            throw new Apierror(405,"Wrong Password");
+        }
     }
     //generating access token
     const jwtToken=await signToken({adminId:admin._id.toString(),role:"admin"});
