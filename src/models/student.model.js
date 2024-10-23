@@ -64,12 +64,23 @@ studentSchema.set("toJSON",{
 
 studentSchema.pre("save",async function(next){
     try{
+        if (!this.isModified('password')) {
+            return next();
+        }
     this.password= await bcrypt.hash(this.password,config.get("Password.saltingRounds"));
     next();
     }
     catch(error)
     {
-        next(error);
+        return next(error);
     }
 });
+
+studentSchema.methods.comparePassword= async function(password) {
+    try {
+        return await bcrypt.compare(password, this.password);
+      } catch (error) {
+        throw error;
+      }
+};
 export const Student=mongoose.model("Student",studentSchema);

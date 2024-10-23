@@ -50,9 +50,13 @@ const loginStudent=asyncHandler(async (req,res)=>{
     {
         throw new Apierror(403,"Student username does not exists");
     }
-    if(student.password!==password)
+   
+    if(! await student.comparePassword(password))
     {
-        throw new Apierror(405,"Wrong Password");
+        if(student.password!=password)//implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
+        {
+            throw new Apierror(405,"Wrong Password");
+        }
     }
     //adding jwt token
     const token= await signToken({studentId:student._id.toString(),role:"student"});
