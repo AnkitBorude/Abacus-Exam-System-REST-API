@@ -3,6 +3,7 @@ import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
 import { Result } from "../models/result.model.js";
+import { generatePDF } from "./pdf.controller.js";
 
 const createResult=asyncHandler(async(req,res)=>{
  const { score, time_taken, total_correct, date_completed,exam } = req.body;
@@ -25,6 +26,6 @@ const createResult=asyncHandler(async(req,res)=>{
 });
 
 const getResultpdf=asyncHandler(async(req,res)=>{
-
+    generatePDF(req,res);
 });
 export {createResult,getResultpdf};
