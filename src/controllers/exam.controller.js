@@ -123,15 +123,19 @@ const getExams=asyncHandler(async(req,res)=>{
             throw new Apierror(456,"No Matching Exam Found with level "+studentLevel);
         }
 
-        transformedExams=Promise.all(
+        transformedExams=await Promise.all(
 
           exam.map(async e=>{
-            const examObj = exam.toJSON();
+            const examObj = e.toJSON();
               // Check if isSingleAttempt is true, then determine if it was attempted
-            if (examObj.isSingleAttempt) {
-            const hasAttempted = await exam.isExamAttempted(student._id);
-            examObj.hasAttempted = hasAttempted;
+            if (e.isSingleAttempt) {
+              //appending the attribute hasAttempted if the exam is single attempt only
+            const hasAttempted = await e.isExamAttempted(student._id);
+            examObj.hasAttemptedOn = hasAttempted;
             }
+           //appending attempt counts
+            let count= await e.countAttempts(student._id);
+            examObj.totalAttempted=count;
           return examObj;
           })
         );

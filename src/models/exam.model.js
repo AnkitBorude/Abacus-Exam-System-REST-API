@@ -48,16 +48,25 @@ examSchema.set('toJSON',{
   }
 })
 
-examSchema.methods.isExamAttempted=async function (studentId){
+examSchema.methods.isExamAttempted= async function (studentId){
  
   const examId=new mongoose.Types.ObjectId(this._id);
-  studentId=new mongoose.Types.ObjectId(studentId);//possible error with object id reference
+  studentId=new mongoose.Types.ObjectId(studentId);
   const result = await Result.findOne({ exam:examId, student:studentId });
   if(result==null)
   {
     return false;
   }
-  return true;
+    //returning the date of the attempt if the exam is attempted
+  return result.date_completed;
+};
+
+examSchema.methods.countAttempts=async function (studentId) {
+  let count=0;
+  const examId=new mongoose.Types.ObjectId(this._id);
+  studentId=new mongoose.Types.ObjectId(studentId);
+  count=await Result.countDocuments({ exam:examId, student:studentId });
+  return count;
 };
 export const Exam = mongoose.model('Exam', examSchema);
 

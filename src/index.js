@@ -47,7 +47,7 @@ try{
       if(config.util.getEnv('NODE_ENV')=="development")
       {
         console.log(chalk.greenBright(`Listening on Localhost -->  http://localhost:${config.get("Application.Port")}`));
-        console.log(chalk.cyanBright(`Listening on  Network   -->  http://${getIpAddresses()[0].address}:${config.get("Application.Port")}`));
+        console.log(chalk.cyanBright(`Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get("Application.Port")}`));
       }else
       {
       console.log(`http://localhost:${config.get("Application.Port")}`);
