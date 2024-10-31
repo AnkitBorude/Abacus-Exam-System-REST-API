@@ -28,6 +28,10 @@ const examSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  isSingleAttempt: {
+    type: Boolean,
+    default: false
+  },
   created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
   questions: [questionSchema]
 }, { timestamps: true });
