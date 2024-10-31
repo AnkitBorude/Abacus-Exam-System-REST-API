@@ -173,10 +173,10 @@ const deleteExam=asyncHandler(async (req,res)=>{
 
 const getResults=asyncHandler(async(req,res)=>{
  
-  let studentId=req.user;
+  let studentId=req.user;//accessign the student id from token if student role
   let examId=req.params.examId;
   if(req.role=="admin"){
-    studentId=req.params.studentId;
+    studentId=req.params.studentId;//accessign the student id from params if admin role
   }
   
   let results=await Result.aggregate([

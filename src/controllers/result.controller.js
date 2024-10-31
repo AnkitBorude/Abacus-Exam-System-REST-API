@@ -24,4 +24,7 @@ const createResult=asyncHandler(async(req,res)=>{
     return res.status(200).json(new Apiresponse("Result created Successfully",200));
 });
 
-export {createResult};
+const getResultpdf=asyncHandler(async(req,res)=>{
+
+});
+export {createResult,getResultpdf};
