@@ -67,10 +67,11 @@ const generateStudentResultPDF = (data) => {
         
         // Add system generated line at the bottom
         const pageHeight = doc.internal.pageSize.height;
-        doc.setFontSize(8);
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'italic');
         const generatedText = `This is a system generated report. Generated on ${new Date().toLocaleString()}`;
-        doc.text(generatedText, doc.internal.pageSize.width/2, pageHeight - 20, { align: 'center' });
+        d
+        oc.text(generatedText, doc.internal.pageSize.width/2, pageHeight - 20, { align: 'center' });
     return doc.output('arraybuffer');
 };
 
