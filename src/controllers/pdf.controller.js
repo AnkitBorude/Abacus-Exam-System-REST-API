@@ -2,7 +2,7 @@
  * ref:https://chatgpt.com/c/671c792f-07c8-800d-97d4-1dac4c9a59a0
  * 
  */
-import generateStudentResultPDF from "../pdftemplets/studentResult.pdf.js";
+import generateStudentResultPDF from "../pdftemplets/generator.pdf.js";
 import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 const generatePDF = async (req, res) => {
