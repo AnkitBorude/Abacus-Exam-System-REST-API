@@ -4,5 +4,5 @@ import { createResult, getResultpdf} from "../controllers/result.controller.js";
 const resultRouter=Router();
 
 resultRouter.route("/").post(authMiddleware,createResult);
-resultRouter.route("/result").get(getResultpdf);
+resultRouter.route("/:resultId/pdf").get(getResultpdf);
 export {resultRouter};

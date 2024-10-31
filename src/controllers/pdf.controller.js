@@ -7,7 +7,8 @@ import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 const generatePDF = async (req, res) => {
     try {
-        const pdfBuffer = generateStudentResultPDF({name:"Ankit Borude",grade:"15"});
+
+        const pdfBuffer = generateStudentResultPDF(req.pdfTemplet);
         res.setHeader('Content-Disposition', `attachment; filename=student-report.pdf`);
         res.setHeader('Content-Type', 'application/pdf');
         res.status(200).send(Buffer.from(pdfBuffer));
