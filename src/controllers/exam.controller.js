@@ -122,10 +122,21 @@ const getExams=asyncHandler(async(req,res)=>{
         {
             throw new Apierror(456,"No Matching Exam Found with level "+studentLevel);
         }
-        transformedExams = exam.map(e => e.toJSON());
-    }
-    
-    return res.status(200).json(new Apiresponse(transformedExams,200));
+
+        transformedExams=Promise.all(
+
+          exam.map(async e=>{
+            const examObj = exam.toJSON();
+              // Check if isSingleAttempt is true, then determine if it was attempted
+            if (examObj.isSingleAttempt) {
+            const hasAttempted = await exam.isExamAttempted(student._id);
+            examObj.hasAttempted = hasAttempted;
+            }
+          return examObj;
+          })
+        );
+      }
+      return res.status(200).json(new Apiresponse(transformedExams,200));
 });
 
 const getQuestions=asyncHandler(async(req,res)=>{

@@ -1,5 +1,6 @@
 import mongoose from 'mongoose';
 import { questionSchema } from './question.model.js';
+import { Result } from './result.model.js';
 const examSchema = new mongoose.Schema({
   title: {
     type: String,
@@ -46,5 +47,17 @@ examSchema.set('toJSON',{
     return rec;
   }
 })
+
+examSchema.methods.isExamAttempted=async function (studentId){
+ 
+  const examId=new mongoose.Types.ObjectId(this._id);
+  studentId=new mongoose.Types.ObjectId(studentId);//possible error with object id reference
+  const result = await Result.findOne({ exam:examId, student:studentId });
+  if(result==null)
+  {
+    return false;
+  }
+  return true;
+};
 export const Exam = mongoose.model('Exam', examSchema);
 
