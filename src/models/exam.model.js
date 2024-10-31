@@ -55,10 +55,10 @@ examSchema.methods.isExamAttempted= async function (studentId){
   const result = await Result.findOne({ exam:examId, student:studentId });
   if(result==null)
   {
-    return false;
+    return {attempted:false,attempt_date:null};
   }
     //returning the date of the attempt if the exam is attempted
-  return result.date_completed;
+  return {attempted:true,attempt_date:result.date_completed};
 };
 
 examSchema.methods.countAttempts=async function (studentId) {

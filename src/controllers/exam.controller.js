@@ -130,12 +130,10 @@ const getExams=asyncHandler(async(req,res)=>{
               // Check if isSingleAttempt is true, then determine if it was attempted
             if (e.isSingleAttempt) {
               //appending the attribute hasAttempted if the exam is single attempt only
-            const hasAttempted = await e.isExamAttempted(student._id);
-            examObj.hasAttemptedOn = hasAttempted;
+            examObj.hasAttempted = await e.isExamAttempted(student._id);
             }
            //appending attempt counts
-            let count= await e.countAttempts(student._id);
-            examObj.totalAttempted=count;
+            examObj.totalAttempted= await e.countAttempts(student._id);;
           return examObj;
           })
         );
