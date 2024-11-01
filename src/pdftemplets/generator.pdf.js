@@ -7,7 +7,7 @@ import { Pdftemplet } from "./pdf.class.js";
  * @param {Pdftemplet} pdfTemplet 
  * @returns 
  */
-const generateStudentResultPDF = (pdfTemplet) => {
+const generatePDF = (pdfTemplet) => {
    
      let theaders;
     // let headers=['Product Name', 'Quantity', 'Price', 'Total',"extra"];
@@ -88,4 +88,4 @@ const generateStudentResultPDF = (pdfTemplet) => {
     return doc.output('arraybuffer');
 };
 
-export default generateStudentResultPDF;
+export default generatePDF;

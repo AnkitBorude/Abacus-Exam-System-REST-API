@@ -36,13 +36,11 @@ const getResultpdf=asyncHandler(async(req,res)=>{
     let myarray=flattenObject(result.toJSON());
     //res.status(200).json(new Apiresponse(result,200));
     let templet=new Pdftemplet("Student Result",result.exam.title,"Ankit Borude","123",null,myarray);
-    req.pdfTemplet=templet;
-    generatePDF(req,res);
+    generatePDF(req,res,templet);
     }
     catch(error)
     {
         throw new Apierror("400",error.message);
     }
-    //generatePDF(req,res);
 });
 export {createResult,getResultpdf};
