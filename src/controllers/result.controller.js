@@ -34,10 +34,13 @@ const getResultpdf=asyncHandler(async(req,res)=>{
     try{
     let result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
     let myarray=flattenObject(result.toJSON());
+    if(result.createdAt!=null || result.createdAt!=undefined)
+    {
     let date= new Date(result.createdAt).toLocaleDateString();
     let time = new Date(result.createdAt).toLocaleTimeString();
 
     myarray.push(["Result Date",date+" "+time]);
+    }
     //res.status(200).json(new Apiresponse(myarray,200));
 
     //capitalizign the first word and replacing the_ and . with space.

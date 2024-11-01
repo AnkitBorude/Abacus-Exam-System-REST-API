@@ -12,7 +12,9 @@ const authMiddleware = (req, res, next) => {
 
         //Adding retracted key as request attribute
         req.user=decoded.studentId || decoded.adminId;
-        req.role=decoded.role;  // Attach the decoded payload to the request object
+        req.role=decoded.role;
+        req.username=decoded.username;
+          // Attach the decoded payload to the request object
         next();
         }catch(error)
         {

@@ -61,7 +61,7 @@ const loginAdmin=asyncHandler(async (req,res)=>{
         }
     }
     //generating access token
-    const jwtToken=await signToken({adminId:admin._id.toString(),role:"admin"});
+    const jwtToken=await signToken({adminId:admin._id.toString(),role:"admin",username:admin.username});
 
     res.status(200).json(new Apiresponse({message:"Login Successfull",token:jwtToken},200));
 });

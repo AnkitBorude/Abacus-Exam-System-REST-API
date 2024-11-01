@@ -59,8 +59,8 @@ const loginStudent=asyncHandler(async (req,res)=>{
         }
     }
     //adding jwt token
-    const token= await signToken({studentId:student._id.toString(),role:"student"});
-    res.status(200).json(new Apiresponse({message:"Login Successfull",token:token},200));
+    const token= await signToken({studentId:student._id.toString(),role:"student",username:student.username});
+    return res.status(200).json(new Apiresponse({message:"Login Successfull",token:token},200));
 });
 
 const getCurrentstudent=asyncHandler(async (req,res)=>{
