@@ -3,7 +3,7 @@ import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
 import { validatefields } from "../utils/validatereqfields.util.js";
 import { Result } from "../models/result.model.js";
-import { generatePDF } from "./pdf.controller.js";
+import { getPdf} from "./pdf.controller.js";
 import mongoose from "mongoose";
 import { flattenObject } from "../utils/flattenObject.util.js";
 import { Pdftemplet } from "../pdftemplets/pdf.class.js";
@@ -35,8 +35,19 @@ const getResultpdf=asyncHandler(async(req,res)=>{
     let result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v");
     let myarray=flattenObject(result.toJSON());
     //res.status(200).json(new Apiresponse(result,200));
+
+    //capitalizign the first word and replacing the_ and . with space.
+    for (let item of myarray){
+        let userpoint=item[0];
+        const firstLetter = userpoint.charAt(0)
+        const firstLetterCap = firstLetter.toUpperCase()
+        const remainingLetters = userpoint.slice(1)
+        let capitalizedWord = firstLetterCap + remainingLetters
+        capitalizedWord=capitalizedWord.replaceAll("."," ").replaceAll("_"," ");
+        item[0]=capitalizedWord;
+    }
     let templet=new Pdftemplet("Student Result",result.exam.title,"Ankit Borude","123",null,myarray);
-    generatePDF(req,res,templet);
+    getPdf(req,res,templet);
     }
     catch(error)
     {
