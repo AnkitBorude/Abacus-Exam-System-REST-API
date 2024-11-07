@@ -75,4 +75,6 @@ const getCurrentstudent=asyncHandler(async (req,res)=>{
         throw new Apierror(441,error.message);
     }
 });
-export {registerStudent,loginStudent,getCurrentstudent};
+
+const getStudents=asyncHandler(async (req,res)=>{});
+export {registerStudent,loginStudent,getCurrentstudent,getStudents};

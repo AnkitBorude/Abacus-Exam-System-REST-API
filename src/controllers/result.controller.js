@@ -54,7 +54,7 @@ const getResultpdf=asyncHandler(async(req,res)=>{
         item[0]=capitalizedWord;
         
     }
-    let templet=new Pdftemplet("Student Result",result.exam.title,"Ankit Borude","123",null,myarray);
+    let templet=new Pdftemplet("Student Result",result.exam.title,req.username,resultId,null,myarray);
     getPdf(req,res,templet);
     }
     catch(error)
