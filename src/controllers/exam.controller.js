@@ -11,9 +11,9 @@ const createExam=asyncHandler(async (req,res)=>{
 
     const {maxTerms, minNumber, maxNumber, operators,total_questions}=req.body;
     let qconfig={maxTerms, minNumber, maxNumber, operators,total_questions};
-    const { title, duration, level,total_marks_per_question, is_active } = req.body;
+    const { title, duration, level,total_marks_per_question, is_active,isSingleAttempt } = req.body;
     
-    let validParams=validatefields({...qconfig,...{ title, duration, level,total_marks_per_question, is_active }});
+    let validParams=validatefields({...qconfig,...{ title, duration, level,total_marks_per_question, is_active,isSingleAttempt }});
 
     if(validParams.parameterisNull)
     {
@@ -30,6 +30,7 @@ const createExam=asyncHandler(async (req,res)=>{
         total_marks_per_question,
         total_questions,
         is_active,
+        isSingleAttempt,
         created_by:req.user,
         questions:questions
     });
