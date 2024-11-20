@@ -76,12 +76,18 @@ const getCurrentstudent=asyncHandler(async (req,res)=>{
     }
 });
 
+/**
+ * Returns the student by the query parameter by the level and class
+ * and returns by the name query parameter passed by name starts with the 
+ * given query string name
+ */
 const getStudents=asyncHandler(async (req,res)=>{
-    const { class: classQuery, level, bot } = req.query;
+    const { class: classQuery, level, name } = req.query;
     
     const query={};
     if(classQuery){query.sclass=classQuery};
     if(level){query.level=level};
+    if(name){query.fullname={$regex:"^"+name,$options:"i"}};//regex to search the fullname starts with the query string name passed with
     let students=null;
     try{
         students = await Student.find(query).select("-_id -password -refreshToken -__v");
