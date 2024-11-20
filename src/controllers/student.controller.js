@@ -76,5 +76,23 @@ const getCurrentstudent=asyncHandler(async (req,res)=>{
     }
 });
 
-const getStudents=asyncHandler(async (req,res)=>{});
+const getStudents=asyncHandler(async (req,res)=>{
+    const { class: classQuery, level, bot } = req.query;
+    
+    const query={};
+    if(classQuery){query.sclass=classQuery};
+    if(level){query.level=level};
+    let students=null;
+    try{
+        students = await Student.find(query).select("-_id -password -refreshToken -__v");
+    }
+    catch(error)
+    {
+        throw new Apierror(489,error.message);
+    }
+    if(students.length==0){throw new Apierror(490,"No students found");}
+
+    return res.status(200).json(new Apiresponse(students.map(s=>s.toJSON())));
+
+});
 export {registerStudent,loginStudent,getCurrentstudent,getStudents};

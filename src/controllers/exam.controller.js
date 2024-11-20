@@ -172,46 +172,89 @@ const deleteExam=asyncHandler(async (req,res)=>{
 
 });
 
+//returns the results attempted by the studentid passed and creadted by admin with exam detail only
+//inflates the exam field
 const getResults=asyncHandler(async(req,res)=>{
  
   let studentId=req.user;//accessign the student id from token if student role
   let examId=req.params.examId;
+  const inflate = req.query.inflate;
+  let results;
   if(req.role=="admin"){
     studentId=req.params.studentId;//accessign the student id from params if admin role
   }
   
-  let results=await Result.aggregate([
-    {
-      $match:{student: new mongoose.Types.ObjectId(studentId),
-        exam:new mongoose.Types.ObjectId(examId)}
-    },
-    {
-    $lookup:{
-      from: "exams",
-      localField:"exam",
-      foreignField:"_id" ,
-      as: "exam"
-    }
-  },
-    {
-      $addFields:{
-        exam_name:{$arrayElemAt:["$exam.title",0]},
-        exam_duration:{$arrayElemAt:["$exam.duration",0]},
-        exam_level:{$arrayElemAt:["$exam.level",0]},
-        exam_total_question:{$arrayElemAt:["$exam.total_questions",0]},
-        exam_marks:{$arrayElemAt:["$exam.total_marks",0]}
-        
+  if(inflate=="student")
+  {
+
+    results=await Result.aggregate([
+      {
+        $match:{exam:new mongoose.Types.ObjectId(examId)}
+      },
+      {
+      $lookup:{
+        from: "students",
+        localField:"student",
+        foreignField:"_id" ,
+        as: "student"
       }
     },
-    {
-      $project:
-        {
-          student:0,
-          exam:0,
-          __v:0
+      {
+        $addFields:{
+          student_name:{$arrayElemAt:["$student.fullname",0]},
+          student_email:{$arrayElemAt:["$student.email",0]},
+          student_class:{$arrayElemAt:["$student.sclass",0]},
+          student_phoneno:{$arrayElemAt:["$student.phone_no",0]},
+          
         }
-    }
-  ]);
+      },
+      {
+        $project:
+          {
+            student:0,
+            exam:0,
+            __v:0
+          }
+      }
+    ]);
+
+  }else
+  {
+
+    results=await Result.aggregate([
+      {
+        $match:{student: new mongoose.Types.ObjectId(studentId),
+          exam:new mongoose.Types.ObjectId(examId)}
+      },
+      {
+      $lookup:{
+        from: "exams",
+        localField:"exam",
+        foreignField:"_id" ,
+        as: "exam"
+      }
+    },
+      {
+        $addFields:{
+          exam_name:{$arrayElemAt:["$exam.title",0]},
+          exam_duration:{$arrayElemAt:["$exam.duration",0]},
+          exam_level:{$arrayElemAt:["$exam.level",0]},
+          exam_total_question:{$arrayElemAt:["$exam.total_questions",0]},
+          exam_marks:{$arrayElemAt:["$exam.total_marks",0]}
+          
+        }
+      },
+      {
+        $project:
+          {
+            student:0,
+            exam:0,
+            __v:0
+          }
+      }
+    ]);
+  }
+  
 
   if(results.length==0)
     {
@@ -269,5 +312,8 @@ const getStudents=asyncHandler(async(req,res)=>{
 
     return res.status(200).json(new Apiresponse(students,200));
 });
+
+//returning all the results of the exam from examid
+//inflates student
 
 export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults,getStudents};
