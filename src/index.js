@@ -8,65 +8,59 @@ import { startLocalmongoDBserver } from "./utils/localhost-mongodb.start.js";
 import os from 'node:os';
 import config from 'config';
 import chalk from "chalk";
+import { Server } from "node:http";
+/***
+ * @type {Server}
+ */
+let server;
+
+let mongoDatabaseInstance;
 try{
+  console.log(chalk.greenBright("Starting Server Initialization..."));
+  logServerStart();
+  console.log('='.repeat(50));
+  //start localhost mongodb service 
+  if(config.util.getEnv('NODE_ENV')=="development"){
+    try{
+      console.log(chalk.yellowBright("Development Server: Executing MongoDB  service startup script"));
+      await startLocalmongoDBserver();
+    }
+    catch(error){
+      console.log(chalk.redBright(error));
+      console.log(chalk.bgYellowBright(chalk.redBright("Try to manually start the mongodb service from system through command line")));
+    }
+  }
+  else{
+    console.log(chalk.yellowBright("Production Server: Connecting to MongoDB server on enviroment url..."));
+  }
+  //connecting to database
+  await getConnection();
+  console.log(chalk.cyan('='.repeat(50)));
+  server=app.listen(config.get("Application.Port"),()=>{
+  console.log(chalk.yellowBright(`Server is running on port ${config.get("Application.Port")}`));
+  if(config.util.getEnv('NODE_ENV')=="development"){
+    console.log(chalk.greenBright(`Listening on Localhost -->  http://localhost:${config.get("Application.Port")}`));
+    console.log(chalk.cyanBright(`Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get("Application.Port")}`));
+  }
+  else{
+    console.log(`http://localhost:${config.get("Application.Port")}`);
+  }
+  console.log(chalk.bgGreen(chalk.blueBright("Successfully started server")));
+  console.log('-'.repeat(50));
+  });
+  app.get('/echo', (req, res) => {
+  res.json({...req.body,echoed:true});
+  })
 
-    console.log(chalk.greenBright("Starting Server Initialization..."));
-   
-      logServerStart();
-      //
-      console.log('='.repeat(50));
-
-          //start localhost mongodb service 
-          if(config.util.getEnv('NODE_ENV')=="development")
-          {
-           try
-           {
-            console.log(chalk.yellowBright("Development Server: Executing MongoDB  service startup script"));
-            await startLocalmongoDBserver();
-           }
-           catch(error)
-           {
-            console.log(chalk.redBright(error));
-            console.log(chalk.bgYellowBright(chalk.redBright("Try to manually start the mongodb service from system through command line")));
-           }
-          }
-          else
-          {
-            console.log(chalk.yellowBright("Production Server: Connecting to MongoDB server on enviroment url..."));
-          }
-      
-          //connecting to database
-      await getConnection();
-      
-      console.log(chalk.cyan('='.repeat(50)));
-
-    
-    
-    app.listen(config.get("Application.Port"),()=>{
-      console.log(chalk.yellowBright(`Server is running on port ${config.get("Application.Port")}`));
-      if(config.util.getEnv('NODE_ENV')=="development")
-      {
-        console.log(chalk.greenBright(`Listening on Localhost -->  http://localhost:${config.get("Application.Port")}`));
-        console.log(chalk.cyanBright(`Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get("Application.Port")}`));
-      }else
-      {
-      console.log(`http://localhost:${config.get("Application.Port")}`);
-      }
-      console.log(chalk.bgGreen(chalk.blueBright("Successfully started server")));
-      console.log('-'.repeat(50));
-     
-    });
-    
-    app.get('/echo', (req, res) => {
-        res.json({...req.body,echoed:true});
-      })
-
+process.on('SIGINT', () => gracefullShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefullShutdown('SIGTERM'));
+process.on('SIGQUIT', () => gracefullShutdown('SIGQUIT'));
 
 }
 catch(error)
 {
+    gracefullShutdown("UnCaughtException");
     console.log(error);//printing error on log/
-    process.exit(1);//shutdowing the node js process directly
 }
 
 function logServerStart() {
@@ -95,4 +89,18 @@ for (const name of Object.keys(interfaces)) {
   }
 }
 return addresses;
+}
+
+function gracefullShutdown(signal)
+{
+  console.log(chalk.yellowBright(`\n Received ${signal}. Starting graceful shutdown...`));
+  server.close(() => {
+    console.log(chalk.yellowBright('HTTP server closed.'));
+    
+    // Close database connections, cleanup resources
+    // For example:
+    // db.close()
+    
+    process.exit(0);
+  });
 }
