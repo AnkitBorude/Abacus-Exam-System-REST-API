@@ -2,10 +2,14 @@ import mongoose from "mongoose";
 import { DB_NAME } from "../constants.js";
 import  config  from "config";
 import chalk from "chalk";
+import getDbHealth from "./db.health.js";
 export async function getConnection(){
     try{
         let connectionInstance=await mongoose.connect(`${process.env.MONGODB_CONNECTION_URL}/${config.get("DB.name")}`);
         console.log(chalk.greenBright(`MongoDB Database Connected :}`));
+        let responseTime=(await getDbHealth()).responseTime;
+        console.log(chalk.blueBright("Database Response Time:"+responseTime+" ms"
+        ));
         return connectionInstance;
     }
     catch(error)

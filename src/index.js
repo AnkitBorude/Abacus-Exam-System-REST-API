@@ -10,6 +10,7 @@ import config from 'config';
 import chalk from "chalk";
 import { Server } from "node:http";
 import { Mongoose } from "mongoose";
+import getDbHealth from "./db/db.health.js"
 /***
  * @type {Server}
  */
@@ -51,9 +52,26 @@ try{
   console.log(chalk.bgGreen(chalk.blueBright("Successfully started server")));
   console.log('-'.repeat(50));
   });
+
   app.get('/echo', (req, res) => {
   res.json({...req.body,echoed:true});
   })
+
+  app.get("/health",async (req,res)=>{
+    //check the health of the external dependencies
+    
+    let health='healthy';
+    let database=await getDbHealth();
+    health=database.health;
+    res.json({
+      status: health,
+      timestamp: new Date().toISOString(),
+      uptime: process.uptime(),
+      version: process.env.npm_package_version,
+      environment: process.env.NODE_ENV,
+      database:database
+    })
+  });
 
 process.on('SIGINT', () => gracefullShutdown('SIGINT'));
 process.on('SIGTERM', () => gracefullShutdown('SIGTERM'));
@@ -104,3 +122,4 @@ function gracefullShutdown(signal)
     console.log(chalk.greenBright('HTTP server closed.'));
   });
 }
+
