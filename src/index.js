@@ -9,11 +9,14 @@ import os from 'node:os';
 import config from 'config';
 import chalk from "chalk";
 import { Server } from "node:http";
+import { Mongoose } from "mongoose";
 /***
  * @type {Server}
  */
 let server;
-
+/**
+ * @type {Mongoose}
+ */
 let mongoDatabaseInstance;
 try{
   console.log(chalk.greenBright("Starting Server Initialization..."));
@@ -34,7 +37,7 @@ try{
     console.log(chalk.yellowBright("Production Server: Connecting to MongoDB server on enviroment url..."));
   }
   //connecting to database
-  await getConnection();
+  mongoDatabaseInstance=await getConnection();
   console.log(chalk.cyan('='.repeat(50)));
   server=app.listen(config.get("Application.Port"),()=>{
   console.log(chalk.yellowBright(`Server is running on port ${config.get("Application.Port")}`));
@@ -60,7 +63,9 @@ process.on('SIGQUIT', () => gracefullShutdown('SIGQUIT'));
 catch(error)
 {
     gracefullShutdown("UnCaughtException");
-    console.log(error);//printing error on log/
+    console.log(error);
+    process.exit(1);
+    //printing error on log/
 }
 
 function logServerStart() {
@@ -93,14 +98,9 @@ return addresses;
 
 function gracefullShutdown(signal)
 {
-  console.log(chalk.yellowBright(`\n Received ${signal}. Starting graceful shutdown...`));
-  server.close(() => {
-    console.log(chalk.yellowBright('HTTP server closed.'));
-    
-    // Close database connections, cleanup resources
-    // For example:
-    // db.close()
-    
-    process.exit(0);
+  console.log(chalk.yellowBright(`Received ${signal}.\nStarting graceful shutdown...`));
+    server.close(async () => {
+    await mongoDatabaseInstance.disconnect();
+    console.log(chalk.greenBright('HTTP server closed.'));
   });
 }
