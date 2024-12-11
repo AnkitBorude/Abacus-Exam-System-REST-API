@@ -28,23 +28,25 @@ const createResult=asyncHandler(async(req,res)=>{
     return res.status(200).json(new Apiresponse("Result created Successfully",200));
 });
 
-const getResultpdf=asyncHandler(async(req,res)=>{
-    let resultId=new mongoose.Types.ObjectId(req.params.resultId);
 
+const getResultpdf=asyncHandler(async(req,res)=>{
+   
+    let resultId=new mongoose.Types.ObjectId(req.params.resultId);
     try{
     let result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
-    let myarray=flattenObject(result.toJSON());
-    if(result.createdAt!=null || result.createdAt!=undefined)
-    {
-    let date= new Date(result.createdAt).toLocaleDateString();
-    let time = new Date(result.createdAt).toLocaleTimeString();
-
-    myarray.push(["Result Date",date+" "+time]);
     }
-    //res.status(200).json(new Apiresponse(myarray,200));
-
-    //capitalizign the first word and replacing the_ and . with space.
-    for (let item of myarray){
+    catch(error)
+    {
+        throw new Apierror(400,"Error while fetch data"+error.message);
+    }
+    
+    //check if the given route is the pdf route then
+    //process the pdf
+    if(req.path.endsWith("/pdf"))
+    {
+        let myarray=flattenObject(result.toJSON());
+        //capitalizign the first word and replacing the_ and . with space.
+        for (let item of myarray){
         let userpoint=item[0];
         const firstLetter = userpoint.charAt(0)
         const firstLetterCap = firstLetter.toUpperCase()
@@ -53,13 +55,22 @@ const getResultpdf=asyncHandler(async(req,res)=>{
         capitalizedWord=capitalizedWord.replaceAll("."," ").replaceAll("_"," ");
         item[0]=capitalizedWord;
         
+        }
+        if(result.createdAt!=null || result.createdAt!=undefined)
+        {
+        let date= new Date(result.createdAt).toLocaleDateString();
+        let time = new Date(result.createdAt).toLocaleTimeString();
+  
+        myarray.push(["Result Date",date+" "+time]);
+        }
+        let templet=new Pdftemplet("Student Result",result.exam.title,req.username,resultId,null,myarray);
+        
+        getPdf(req,res,templet);
     }
-    let templet=new Pdftemplet("Student Result",result.exam.title,req.username,resultId,null,myarray);
-    getPdf(req,res,templet);
-    }
-    catch(error)
+    else
     {
-        throw new Apierror("400",error.message);
+        res.status(200).json(new Apiresponse(myarray,200));
     }
+    
 });
 export {createResult,getResultpdf};
