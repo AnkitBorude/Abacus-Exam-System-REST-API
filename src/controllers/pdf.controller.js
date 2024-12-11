@@ -3,8 +3,15 @@
  * 
  */
 import createPdf from "../pdftemplets/generator.pdf.js";
+import { Pdftemplet } from "../pdftemplets/pdf.class.js";
 import Apierror from "../utils/apierror.util.js";
 import Apiresponse from "../utils/apiresponse.util.js";
+/***
+ * @async
+ * @param {Request} req
+ * @param {Response} res
+ * @param {Pdftemplet} pdfTemplet
+ */
 const getPdf = async (req, res,pdfTemplet) => {
     try {
 
