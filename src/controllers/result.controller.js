@@ -29,11 +29,12 @@ const createResult=asyncHandler(async(req,res)=>{
 });
 
 
-const getResultpdf=asyncHandler(async(req,res)=>{
+const getResult=asyncHandler(async(req,res)=>{
    
     let resultId=new mongoose.Types.ObjectId(req.params.resultId);
+    let result;
     try{
-    let result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
+    result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
     }
     catch(error)
     {
@@ -69,8 +70,8 @@ const getResultpdf=asyncHandler(async(req,res)=>{
     }
     else
     {
-        res.status(200).json(new Apiresponse(myarray,200));
+        res.status(200).json(new Apiresponse(result.toJSON(),200));
     }
     
 });
-export {createResult,getResultpdf};
+export {createResult,getResult};
