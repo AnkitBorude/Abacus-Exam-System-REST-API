@@ -31,19 +31,24 @@ const createResult=asyncHandler(async(req,res)=>{
 
 const getResult=asyncHandler(async(req,res)=>{
    
+    if(!mongoose.Types.ObjectId.isValid(req.params.resultId)){
+        throw new Apierror(403,"Invalid Result Id");
+        return;
+    }
     let resultId=new mongoose.Types.ObjectId(req.params.resultId);
+    
     let result;
-    try{
-    result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
-    }
-    catch(error)
-    {
-        throw new Apierror(400,"Error while fetch data"+error.message);
-    }
+    
+    
+        result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
+        if(!result)
+        {
+            throw new Apierror(410,"Result Not Found");
+        }
     
     //check if the given route is the pdf route then
     //process the pdf
-    if(req.path.endsWith("/pdf"))
+    if(req.query.format=="pdf")
     {
         let myarray=flattenObject(result.toJSON());
         //capitalizign the first word and replacing the_ and . with space.

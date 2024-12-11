@@ -5,5 +5,4 @@ const resultRouter=Router();
 
 resultRouter.route("/").post(authMiddleware,createResult);
 resultRouter.route("/:resultId").get(getResult);
-resultRouter.route("/:resultId/pdf").get(getResult);
 export {resultRouter};
