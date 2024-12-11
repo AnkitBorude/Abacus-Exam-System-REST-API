@@ -7,13 +7,14 @@ import { getPdf} from "./pdf.controller.js";
 import mongoose from "mongoose";
 import { flattenObject } from "../utils/flattenObject.util.js";
 import { Pdftemplet } from "../pdftemplets/pdf.class.js";
+import { HTTP_STATUS_CODES } from "../constants.js";
 
 const createResult=asyncHandler(async(req,res)=>{
  const { score, time_taken, total_correct, date_completed,exam } = req.body;
  let validParams=validatefields({ score, time_taken, total_correct, date_completed,exam });
     if(validParams.parameterisNull)
     {
-        throw new Apierror(401,validParams.parameterName+" is null or undefined");
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,validParams.parameterName+" is null or undefined");
     }
 
     const result = new Result({
@@ -32,7 +33,7 @@ const createResult=asyncHandler(async(req,res)=>{
 const getResult=asyncHandler(async(req,res)=>{
    
     if(!mongoose.Types.ObjectId.isValid(req.params.resultId)){
-        throw new Apierror(403,"Invalid Result Id");
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Invalid Result Id");
         return;
     }
     let resultId=new mongoose.Types.ObjectId(req.params.resultId);
@@ -43,7 +44,7 @@ const getResult=asyncHandler(async(req,res)=>{
         result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
         if(!result)
         {
-            throw new Apierror(410,"Result Not Found");
+            throw new Apierror(HTTP_STATUS_CODES.GONE.code,"Result Not Found");
         }
     
     //check if the given route is the pdf route then
