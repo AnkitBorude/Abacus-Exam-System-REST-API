@@ -5,7 +5,7 @@ import { Pdftemplet } from "./pdf.class.js";
 /**
  * 
  * @param {Pdftemplet} pdfTemplet 
- * @returns 
+ * @returns {ArrayBuffer}
  */
 const createPdf = (pdfTemplet) => {
    
