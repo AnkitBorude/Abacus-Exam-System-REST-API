@@ -9,7 +9,9 @@
         "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'",
         "prof": "node --prof ./src/index.js",
         "lint": "npx eslint .",
-        "lint:fix": "npx eslint . --fix"
+        "lint:fix": "npx eslint . --fix",
+        "format:check": "npx prettier . --check",
+        "format:fix": "npx prettier . --write"
     },
     "author": "",
     "license": "ISC",
