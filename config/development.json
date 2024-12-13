@@ -1,11 +1,11 @@
 {
-    "Application":{
-        "Port":3000
+    "Application": {
+        "Port": 3000
     },
-    "DB":{
-        "name":"CodingExam"
+    "DB": {
+        "name": "CodingExam"
     },
-    "Password":{
-        "saltingRounds":2
+    "Password": {
+        "saltingRounds": 2
     }
 }

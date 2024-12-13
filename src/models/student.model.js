@@ -1,56 +1,59 @@
-import mongoose from "mongoose";
-import bcrypt from "bcryptjs";
-import config from "config";
-import { MAX_USERNAME_LENGTH,MIN_USERNAME_LENGTH } from "../constants.js";
-const studentSchema= new mongoose.Schema({
-    fullname:{
-        type:String,
-        required:true,
-        trim:true
+import mongoose from 'mongoose';
+import bcrypt from 'bcryptjs';
+import config from 'config';
+import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '../constants.js';
+const studentSchema = new mongoose.Schema(
+    {
+        fullname: {
+            type: String,
+            required: true,
+            trim: true,
+        },
+        username: {
+            type: String,
+            required: true,
+            trim: true,
+            minLength: MIN_USERNAME_LENGTH,
+            maxLength: MAX_USERNAME_LENGTH,
+            unique: true,
+        },
+        email: {
+            type: String,
+            required: true,
+            lowecase: true,
+            trim: true,
+        },
+        level: {
+            type: String,
+            required: true,
+        },
+        sclass: {
+            type: String,
+            required: true,
+        },
+        phone_no: {
+            type: String,
+            match: [/^\d{10}$/],
+        },
+        password: {
+            type: String,
+            required: [true, 'Password is required'],
+        },
+        refreshToken: {
+            type: String,
+            default: ' ',
+        },
     },
-    username:{
-        type:String,
-        required:true,
-        trim:true,
-        minLength:MIN_USERNAME_LENGTH,
-        maxLength:MAX_USERNAME_LENGTH,
-        unique:true
-    },
-    email: {
-    type: String,
-    required: true,
-    lowecase: true,
-    trim: true, 
-    },
-    level: {
-    type: String,
-    required: true
-    },
-    sclass: {
-    type: String,
-    required: true
-    },
-    phone_no: {
-    type: String,
-    match:[ /^\d{10}$/]
-    },
-    password: {
-        type: String,
-        required: [true, 'Password is required']
-    },
-    refreshToken: {
-        type: String,
-        default:" "
-    }
-},{timestamps:true});
+    { timestamps: true }
+);
 
-studentSchema.set("toJSON",{
-    //doc: The original Mongoose document (before conversion). 
+studentSchema.set('toJSON', {
+    //doc: The original Mongoose document (before conversion).
     //This includes all the data and Mongoose-specific features (like methods and virtuals).
     //ret: The plain JavaScript object (the result of converting the Mongoose document).
     // This is the object that will be transformed and returned.
 
-    transform:(doc,rec)=>{
+    transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
         delete rec._id;
         delete rec.__v;
@@ -59,28 +62,29 @@ studentSchema.set("toJSON",{
         delete rec.refreshToken;
         delete rec.password;
         return rec;
-    }
+    },
 });
 
-studentSchema.pre("save",async function(next){
-    try{
+studentSchema.pre('save', async function (next) {
+    try {
         if (!this.isModified('password')) {
             return next();
         }
-    this.password= await bcrypt.hash(this.password,config.get("Password.saltingRounds"));
-    next();
-    }
-    catch(error)
-    {
+        this.password = await bcrypt.hash(
+            this.password,
+            config.get('Password.saltingRounds')
+        );
+        next();
+    } catch (error) {
         return next(error);
     }
 });
 
-studentSchema.methods.comparePassword= async function(password) {
+studentSchema.methods.comparePassword = async function (password) {
     try {
         return await bcrypt.compare(password, this.password);
-      } catch (error) {
+    } catch (error) {
         throw error;
-      }
+    }
 };
-export const Student=mongoose.model("Student",studentSchema);
+export const Student = mongoose.model('Student', studentSchema);

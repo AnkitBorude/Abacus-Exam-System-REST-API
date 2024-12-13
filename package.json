@@ -1,35 +1,37 @@
 {
-  "name": "abacus-exam-backend",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "NODE_ENV=production node ./src/index.js",
-    "dev": "node ./src/index.js",
-    "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'",
-    "prof": "node --prof ./src/index.js",
-    "lint":"npx eslint ."
-  },
-  "author": "",
-  "license": "ISC",
-  "description": "",
-  "type": "module",
-  "dependencies": {
-    "bcryptjs": "^2.4.3",
-    "chalk": "^5.3.0",
-    "config": "^3.3.12",
-    "dotenv": "^16.4.5",
-    "express": "^4.19.2",
-    "helmet": "^8.0.0",
-    "jsonwebtoken": "^9.0.2",
-    "jspdf": "^2.5.2",
-    "jspdf-autotable": "^3.8.4",
-    "mongoose": "^8.5.3",
-    "random-js": "^2.1.0"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.16.0",
-    "eslint": "^9.16.0",
-    "globals": "^15.13.0"
-  }
+    "name": "abacus-exam-backend",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1",
+        "start": "NODE_ENV=production node ./src/index.js",
+        "dev": "node ./src/index.js",
+        "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'",
+        "prof": "node --prof ./src/index.js",
+        "lint": "npx eslint .",
+        "lint:fix": "npx eslint . --fix"
+    },
+    "author": "",
+    "license": "ISC",
+    "description": "",
+    "type": "module",
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "chalk": "^5.3.0",
+        "config": "^3.3.12",
+        "dotenv": "^16.4.5",
+        "express": "^4.19.2",
+        "helmet": "^8.0.0",
+        "jsonwebtoken": "^9.0.2",
+        "jspdf": "^2.5.2",
+        "jspdf-autotable": "^3.8.4",
+        "mongoose": "^8.5.3",
+        "random-js": "^2.1.0"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.16.0",
+        "eslint": "^9.16.0",
+        "globals": "^15.13.0",
+        "prettier": "3.4.2"
+    }
 }

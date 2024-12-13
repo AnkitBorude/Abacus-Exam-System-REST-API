@@ -1,13 +1,12 @@
-export class Pdftemplet{
-
+export class Pdftemplet {
     /**
-     * 
-     * @param {string} title 
-     * @param {string} subTitle 
-     * @param {string} generatedBy 
-     * @param {string} reportId 
-     * @param {string[]} headers 
-     * @param {string[]} body 
+     *
+     * @param {string} title
+     * @param {string} subTitle
+     * @param {string} generatedBy
+     * @param {string} reportId
+     * @param {string[]} headers
+     * @param {string[]} body
      */
     constructor(title, subTitle, generatedBy, reportId, headers, body) {
         this.title = title;
@@ -28,22 +27,22 @@ export class Pdftemplet{
 
     // Method to display report headers
     displayHeaders() {
-        console.log(this.headers.join(" | "));
+        console.log(this.headers.join(' | '));
     }
 
     // Method to display report body
     displayBody() {
-        this.body.forEach(row => {
-            console.log(row.join(" | "));
+        this.body.forEach((row) => {
+            console.log(row.join(' | '));
         });
     }
 
     // Method to display full report
     displayFullReport() {
         this.displayReportInfo();
-        console.log("\nHeaders:");
+        console.log('\nHeaders:');
         this.displayHeaders();
-        console.log("\nBody:");
+        console.log('\nBody:');
         this.displayBody();
     }
 }

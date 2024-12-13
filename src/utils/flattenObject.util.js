@@ -2,7 +2,11 @@ export function flattenObject(obj, parentKey = '', result = []) {
     for (let key in obj) {
         if (Object.prototype.hasOwnProperty.call(obj, key)) {
             const newKey = parentKey ? `${parentKey}.${key}` : key;
-            if (typeof obj[key] === 'object' && !Array.isArray(obj[key]) && obj[key] !== null) {
+            if (
+                typeof obj[key] === 'object' &&
+                !Array.isArray(obj[key]) &&
+                obj[key] !== null
+            ) {
                 // Recursive call for nested objects
                 flattenObject(obj[key], newKey, result);
             } else {

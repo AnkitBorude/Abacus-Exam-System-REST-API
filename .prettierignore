@@ -1,0 +1,21 @@
+# Ignore node_modules and other dependencies
+node_modules/
+package-lock.json
+pnpm-lock.yaml
+yarn.lock
+
+# Ignore build and output directories
+dist/
+build/
+coverage/
+
+# Ignore environment and configuration files
+.env
+.env.*.local
+
+# Ignore specific files
+*.min.js
+*.log
+
+#ignore the shell script
+script/
