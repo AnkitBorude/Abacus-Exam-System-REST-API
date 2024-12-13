@@ -1,5 +1,6 @@
 import dotenv from "dotenv";
-const result=dotenv.config({
+import process from "node:process";
+dotenv.config({
     override:true
 });
 import {app} from "./app.js";
@@ -8,16 +9,8 @@ import { startLocalmongoDBserver } from "./utils/localhost-mongodb.start.js";
 import os from 'node:os';
 import config from 'config';
 import chalk from "chalk";
-import { Server } from "node:http";
-import { Mongoose } from "mongoose";
 import getDbHealth from "./db/db.health.js"
-/***
- * @type {Server}
- */
 let server;
-/**
- * @type {Mongoose}
- */
 let mongoDatabaseInstance;
 try{
   console.log(chalk.greenBright("Starting Server Initialization..."));
