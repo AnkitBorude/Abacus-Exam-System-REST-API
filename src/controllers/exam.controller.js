@@ -5,8 +5,9 @@ import { validatefields } from "../utils/validatereqfields.util.js";
 import { Exam } from "../models/exam.model.js";
 import mcqGenerator from "../core/mcqGenerator.js";
 import { Student } from "../models/student.model.js";
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 import { Result } from "../models/result.model.js";
+import { HTTP_STATUS_CODES } from "../constants.js";
 const createExam=asyncHandler(async (req,res)=>{
 
     const {maxTerms, minNumber, maxNumber, operators,total_questions}=req.body;
@@ -173,8 +174,38 @@ const deleteExam=asyncHandler(async (req,res)=>{
   /**
    * extracting the exam id
    * checking valid exam id(Object Id)
-   * checking the whether the any 
+   * checking the whether the any result associated with the intended exam
+   * if yes ->
+   *  then soft delete the exam via
+   *        setting the isDelete and DeletedAt attribute true
+   *        removing the questions of exams to free up some storage
+   *        setting the isActive as false
+   * else No->
+   *      directly remove the exam document
    */
+  let examId=req.params.examId;
+     if(!mongoose.Types.ObjectId.isValid(examId)){
+       throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Invalid Exam Id");
+      }
+      examId= new Mongoose.Types.ObjectId(examId);
+      let exam= await Exam.findById(examId);
+      if(!exam)
+      {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND,"Exam Not found");
+      }
+
+      const exists= await Result.findOne({exam:examId}).lean().select("_id");
+      if(exists){
+        exam.is_deleted=true;
+        exam.deletedAt=new Date();
+        exam.is_active=false;
+        exam.questions=[];
+        await exam.save();
+      }
+      else
+      {
+        await exam.remove();
+      }
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only
