@@ -204,7 +204,7 @@ const deleteExam=asyncHandler(async (req,res)=>{
       }
       else
       {
-        await exam.remove();
+        await Exam.deleteOne({"_id":exam._id});
       }
       res.status(200).json(new Apiresponse("Exam deleted Successfully",200));
 });
