@@ -170,6 +170,11 @@ const deactivateExam=asyncHandler(async(req,res)=>{
 
 const deleteExam=asyncHandler(async (req,res)=>{
 
+  /**
+   * extracting the exam id
+   * checking valid exam id(Object Id)
+   * checking the whether the any 
+   */
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only

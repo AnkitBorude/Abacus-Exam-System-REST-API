@@ -33,6 +33,14 @@ const examSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  is_deleted:{
+    type:Boolean,
+    default:false
+  },
+  deletedAt:{
+    type:Date,
+    default:null
+  },
   created_by: { type: mongoose.Schema.Types.ObjectId, ref: 'Admin', required: true },
   questions: [questionSchema]
 }, { timestamps: true });
