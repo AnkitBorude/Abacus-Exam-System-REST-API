@@ -206,7 +206,7 @@ const deleteExam=asyncHandler(async (req,res)=>{
       {
         await Exam.deleteOne({"_id":exam._id});
       }
-      res.status(200).json(new Apiresponse("Exam deleted Successfully",200));
+      res.status(204).json(new Apiresponse("Exam deleted Successfully",204));
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only

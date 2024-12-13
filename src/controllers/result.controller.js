@@ -37,16 +37,11 @@ const getResult=asyncHandler(async(req,res)=>{
         return;
     }
     let resultId=new mongoose.Types.ObjectId(req.params.resultId);
-    
-  
-    
-    
         let result=await Result.findById(resultId).populate("student exam","fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question").select("-_id -__v").select("+createdAt");
         if(!result)
         {
             throw new Apierror(HTTP_STATUS_CODES.GONE.code,"Result Not Found");
         }
-    
     //check if the given route is the pdf route then
     //process the pdf
     if(req.query.format=="pdf")
