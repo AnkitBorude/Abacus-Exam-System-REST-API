@@ -196,18 +196,17 @@ const deleteExam=asyncHandler(async (req,res)=>{
 
       const exists= await Result.findOne({exam:examId}).lean().select("_id");
       if(exists){
-        // exam.is_deleted=true;
-        // exam.deletedAt=new Date();
-        // exam.is_active=false;
-        // exam.questions=[];
-        // await exam.save();
-        res.status(200).json(new Apiresponse("Exam Soft deleted Successfully",200));
+        exam.is_deleted=true;
+        exam.deletedAt=new Date();
+        exam.is_active=false;
+        exam.questions=[];
+        await exam.save();
       }
       else
       {
-        //await exam.remove();
-        res.status(200).json(new Apiresponse("Exam Hard deleted Successfully",200));
+        await exam.remove();
       }
+      res.status(200).json(new Apiresponse("Exam deleted Successfully",200));
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only
