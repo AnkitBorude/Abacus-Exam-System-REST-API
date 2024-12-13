@@ -187,24 +187,26 @@ const deleteExam=asyncHandler(async (req,res)=>{
      if(!mongoose.Types.ObjectId.isValid(examId)){
        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Invalid Exam Id");
       }
-      examId= new Mongoose.Types.ObjectId(examId);
+      examId= new mongoose.Types.ObjectId(examId);
       let exam= await Exam.findById(examId);
       if(!exam)
       {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND,"Exam Not found");
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Exam Not found");
       }
 
       const exists= await Result.findOne({exam:examId}).lean().select("_id");
       if(exists){
-        exam.is_deleted=true;
-        exam.deletedAt=new Date();
-        exam.is_active=false;
-        exam.questions=[];
-        await exam.save();
+        // exam.is_deleted=true;
+        // exam.deletedAt=new Date();
+        // exam.is_active=false;
+        // exam.questions=[];
+        // await exam.save();
+        res.status(200).json(new Apiresponse("Exam Soft deleted Successfully",200));
       }
       else
       {
-        await exam.remove();
+        //await exam.remove();
+        res.status(200).json(new Apiresponse("Exam Hard deleted Successfully",200));
       }
 });
 
@@ -352,4 +354,4 @@ const getStudents=asyncHandler(async(req,res)=>{
 //returning all the results of the exam from examid
 //inflates student
 
-export {createExam,getExams,getQuestions,activateExam,deactivateExam,getResults,getStudents};
+export {deleteExam,createExam,getExams,getQuestions,activateExam,deactivateExam,getResults,getStudents};
