@@ -163,6 +163,27 @@ const deleteStudent=asyncHandler(async(req,res)=>{
 
 const deleteStudentAllRecord=asyncHandler(async(req,res)=>{
 
+    //remove all the results;
+    //remove the whole student
+    let studentId = req.params.studentId;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+    studentId = new mongoose.Types.ObjectId(studentId);
+    let student = await Student.findById(studentId);
+    if (!student) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
+    }
+
+    //delete all associated results
+   let deletedObj= await Result.deleteMany({ student: studentId });
+    //delete the student
+    await Student.deleteOne({ _id: student._id });
+
+    res.status(200).json(new Apiresponse(`Student and associated ${deletedObj.deletedCount} records deleted Successfully`, 200));
 });
 
 export { registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };
