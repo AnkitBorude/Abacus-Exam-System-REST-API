@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
-import { Result } from '../models/result.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
 import signToken from '../utils/jwttoken.util.js';
 const registerStudent = asyncHandler(async (req, res) => {
@@ -35,7 +34,7 @@ const registerStudent = asyncHandler(async (req, res) => {
             phone_no,
             password,
         });
-        const savedStudent = await student.save();
+        await student.save();
         res.json(new Apiresponse('Student Registration Successfull', 200));
     } catch (error) {
         if (
@@ -132,4 +131,14 @@ const getStudents = asyncHandler(async (req, res) => {
         .status(200)
         .json(new Apiresponse(students.map((s) => s.toJSON())));
 });
-export { registerStudent, loginStudent, getCurrentstudent, getStudents };
+
+const deleteStudent=asyncHandler(async(req,res)=>{
+//performing soft delete and hard delete as required
+
+});
+
+const deleteStudentAllRecord=asyncHandler(async(req,res)=>{
+
+});
+
+export { registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };

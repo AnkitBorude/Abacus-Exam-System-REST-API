@@ -39,6 +39,14 @@ const studentSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Password is required'],
         },
+        is_deleted: {
+            type: Boolean,
+            default: false,
+        },
+        deletedAt: {
+            type: Date,
+            default: null,
+        },
         refreshToken: {
             type: String,
             default: ' ',
@@ -81,10 +89,6 @@ studentSchema.pre('save', async function (next) {
 });
 
 studentSchema.methods.comparePassword = async function (password) {
-    try {
-        return await bcrypt.compare(password, this.password);
-    } catch (error) {
-        throw error;
-    }
+    return await bcrypt.compare(password, this.password);
 };
 export const Student = mongoose.model('Student', studentSchema);
