@@ -8,6 +8,7 @@ import {
     getResults,
     getStudents,
     deleteExam,
+    deleteResults,
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 const examRouter = Router();
@@ -23,4 +24,5 @@ examRouter
     .route('/:examId/students/:studentId/results')
     .get(authMiddleware, getResults);
 examRouter.route('/:examId').delete(deleteExam);
+examRouter.route('/:examId/results').delete(authMiddleware,deleteResults);
 export { examRouter };

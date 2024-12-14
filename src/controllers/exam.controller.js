@@ -65,7 +65,7 @@ const createExam = asyncHandler(async (req, res) => {
         questions: questions,
     });
 
-   await exam.save();
+    await exam.save();
 
     return res
         .status(200)
@@ -334,6 +334,8 @@ const getResults = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(results, 200));
 });
 
+//returning all the results of the exam from examid
+//inflates student
 const getStudents = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
 
@@ -378,9 +380,45 @@ const getStudents = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(students, 200));
 });
 
-//returning all the results of the exam from examid
-//inflates student
 
+
+const deleteResults=asyncHandler(async (req,res)=>{
+    let examId = req.params.examId;
+    if (!mongoose.Types.ObjectId.isValid(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    examId = new mongoose.Types.ObjectId(examId);
+    let userId = new mongoose.Types.ObjectId(req.user);
+    let exam = await Exam.findById(examId);
+    //can delete the results even if the exam is deleted
+    if (!exam) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
+    }
+
+    //role based access
+    if(req.role=="admin")
+    {
+        if(exam.created_by.equals(userId))
+        {
+            let deletedObj=await Result.deleteMany({exam:exam._id});
+            res.status(200).json(new Apiresponse(`Admin: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
+        }else
+        {
+            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Unauthorized cannot delete the results");
+        }
+    }else if(req.role=="student")
+    {
+        let deletedObj=await Result.deleteMany({exam:exam._id,student:userId});
+        res.status(200).json(new Apiresponse(`Student: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
+    }
+    else
+    {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_ACCEPTABLE.code,"Cannot delete");
+    }
+});
 export {
     deleteExam,
     createExam,
@@ -390,4 +428,5 @@ export {
     deactivateExam,
     getResults,
     getStudents,
+    deleteResults
 };
