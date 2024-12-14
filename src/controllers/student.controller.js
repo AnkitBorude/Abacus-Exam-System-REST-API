@@ -5,6 +5,9 @@ import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
 import signToken from '../utils/jwttoken.util.js';
+import { HTTP_STATUS_CODES } from '../constants.js';
+import mongoose from 'mongoose';
+import { Result } from '../models/result.model.js';
 const registerStudent = asyncHandler(async (req, res) => {
     const { fullname, email, username, level, sclass, phone_no, password } =
         req.body;
@@ -133,7 +136,31 @@ const getStudents = asyncHandler(async (req, res) => {
 });
 
 const deleteStudent=asyncHandler(async(req,res)=>{
-//performing soft delete and hard delete as required
+//performing soft delete and hard delete of the student
+let studentId = req.params.studentId;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+    studentId = new mongoose.Types.ObjectId(studentId);
+    let student = await Result.findById(studentId);
+    if (!student) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
+    }
+    const exists = await Result.findOne({ student: studentId }).lean().select('_id');
+    let sdelete="soft";
+    if (exists) {
+        //soft delete
+        student.is_deleted = true;
+        student.deletedAt = new Date();
+        await student.save();
+    } else {
+        sdelete="hard"
+        await Student.deleteOne({ _id: student._id });
+    }
+    res.status(204).json(new Apiresponse(`Student deleted ${sdelete}Successfully`, 204));
 
 });
 

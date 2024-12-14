@@ -11,7 +11,9 @@
         "lint": "npx eslint .",
         "lint:fix": "npx eslint . --fix",
         "format:check": "npx prettier . --check",
-        "format:fix": "npx prettier . --write"
+        "format:fix": "npx prettier . --write",
+        "db:dump": "node ./scripts/mongo-dump.js dump",
+        "db:restore": "node ./scripts/mongo-dump.js restore"
     },
     "author": "",
     "license": "ISC",
