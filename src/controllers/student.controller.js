@@ -146,7 +146,7 @@ const deleteStudent=asyncHandler(async(req,res)=>{
     }
     studentId = new mongoose.Types.ObjectId(studentId);
     let student = await Student.findById(studentId);
-    if (!student) {
+    if (!student || student.is_deleted) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
     }
     const exists = await Result.findOne({ student: studentId }).lean().select('_id');
@@ -158,7 +158,7 @@ const deleteStudent=asyncHandler(async(req,res)=>{
         student.username=student.username+"deletedAt"+Date.now();
         await student.save();
     } else {
-        //harddelete
+        //hard delete
         await Student.deleteOne({ _id: student._id });
     }
     res.status(200).json(new Apiresponse(`Student deleted Successfully`, 200));

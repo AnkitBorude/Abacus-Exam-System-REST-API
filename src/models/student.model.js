@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
-import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '../constants.js';
+import { MIN_USERNAME_LENGTH } from '../constants.js';
 const studentSchema = new mongoose.Schema(
     {
         fullname: {

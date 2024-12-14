@@ -5,7 +5,7 @@ import { validatefields } from '../utils/validatereqfields.util.js';
 import { Exam } from '../models/exam.model.js';
 import mcqGenerator from '../core/mcqGenerator.js';
 import { Student } from '../models/student.model.js';
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 const createExam = asyncHandler(async (req, res) => {
@@ -65,7 +65,7 @@ const createExam = asyncHandler(async (req, res) => {
         questions: questions,
     });
 
-    const savedExam = await exam.save();
+   await exam.save();
 
     return res
         .status(200)
@@ -233,7 +233,7 @@ const deleteExam = asyncHandler(async (req, res) => {
     }
     examId = new mongoose.Types.ObjectId(examId);
     let exam = await Exam.findById(examId);
-    if (!exam) {
+    if (!exam || exam.is_deleted) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
     }
 
