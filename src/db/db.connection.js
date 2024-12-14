@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { DB_NAME } from '../constants.js';
+import process from 'node:process';
 import config from 'config';
 import chalk from 'chalk';
 import getDbHealth from './db.health.js';
