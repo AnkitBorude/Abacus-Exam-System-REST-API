@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
+import process from 'node:process';
 import config from 'config';
 import chalk from 'chalk';
 import getDbHealth from './db.health.js';
-import process from "node:process";
 export async function getConnection() {
     try {
         let connectionInstance = await mongoose.connect(
