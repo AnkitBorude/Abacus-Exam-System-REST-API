@@ -57,24 +57,20 @@ const loginStudent = asyncHandler(async (req, res) => {
     let validParams = validatefields({ username, password });
     if (validParams.parameterisNull) {
         throw new Apierror(
-            401,
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
             validParams.parameterName + ' is / are null or undefined'
         );
     }
-    let student; //extracting the admin from the db
-    try {
-        student = await Student.findOne({ username });
-    } catch (error) {
-        throw new Apierror(402, error.message);
+    //extracting the student from the db
+  
+        let student = await Student.findOne({ username });
+    if (!student || student.is_deleted) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student does not exists');
     }
-    if (!student) {
-        throw new Apierror(403, 'Student username does not exists');
-    }
-
     if (!(await student.comparePassword(password))) {
         if (student.password != password) {
             //implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
-            throw new Apierror(405, 'Wrong Password');
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, 'Wrong Password');
         }
     }
     //adding jwt token
