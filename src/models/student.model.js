@@ -14,7 +14,6 @@ const studentSchema = new mongoose.Schema(
             required: true,
             trim: true,
             minLength: MIN_USERNAME_LENGTH,
-            maxLength: MAX_USERNAME_LENGTH,
             unique: true,
         },
         email: {

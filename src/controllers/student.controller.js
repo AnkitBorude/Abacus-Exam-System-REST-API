@@ -137,7 +137,7 @@ const getStudents = asyncHandler(async (req, res) => {
 
 const deleteStudent=asyncHandler(async(req,res)=>{
 //performing soft delete and hard delete of the student
-let studentId = req.params.studentId;
+    let studentId = req.params.studentId;
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -145,22 +145,23 @@ let studentId = req.params.studentId;
         );
     }
     studentId = new mongoose.Types.ObjectId(studentId);
-    let student = await Result.findById(studentId);
+    let student = await Student.findById(studentId);
     if (!student) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
     }
     const exists = await Result.findOne({ student: studentId }).lean().select('_id');
-    let sdelete="soft";
     if (exists) {
         //soft delete
         student.is_deleted = true;
         student.deletedAt = new Date();
+        //making the soft deleted students username reusable
+        student.username=student.username+"deletedAt"+Date.now();
         await student.save();
     } else {
-        sdelete="hard"
+        //harddelete
         await Student.deleteOne({ _id: student._id });
     }
-    res.status(204).json(new Apiresponse(`Student deleted ${sdelete}Successfully`, 204));
+    res.status(200).json(new Apiresponse(`Student deleted Successfully`, 200));
 
 });
 
