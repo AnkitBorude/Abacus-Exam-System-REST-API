@@ -404,7 +404,7 @@ const deleteResults=asyncHandler(async (req,res)=>{
         if(exam.created_by.equals(userId))
         {
             let deletedObj=await Result.deleteMany({exam:exam._id});
-            res.status(200).json(new Apiresponse(`Successfully deleted ${deletedObj.deletedCount} results`, 200));
+            res.status(200).json(new Apiresponse(`Admin: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
         }else
         {
             throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Unauthorized cannot delete the results");
@@ -412,7 +412,7 @@ const deleteResults=asyncHandler(async (req,res)=>{
     }else if(req.role=="student")
     {
         let deletedObj=await Result.deleteMany({exam:exam._id,student:userId});
-        res.status(200).json(new Apiresponse(`Successfully deleted ${deletedObj.deletedCount} results`, 200));
+        res.status(200).json(new Apiresponse(`Student: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
     }
     else
     {
