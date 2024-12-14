@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
-import { MAX_USERNAME_LENGTH, MIN_USERNAME_LENGTH } from '../constants.js';
+import { MIN_USERNAME_LENGTH } from '../constants.js';
 const studentSchema = new mongoose.Schema(
     {
         fullname: {
@@ -14,7 +14,6 @@ const studentSchema = new mongoose.Schema(
             required: true,
             trim: true,
             minLength: MIN_USERNAME_LENGTH,
-            maxLength: MAX_USERNAME_LENGTH,
             unique: true,
         },
         email: {
@@ -38,6 +37,14 @@ const studentSchema = new mongoose.Schema(
         password: {
             type: String,
             required: [true, 'Password is required'],
+        },
+        is_deleted: {
+            type: Boolean,
+            default: false,
+        },
+        deletedAt: {
+            type: Date,
+            default: null,
         },
         refreshToken: {
             type: String,
@@ -81,10 +88,6 @@ studentSchema.pre('save', async function (next) {
 });
 
 studentSchema.methods.comparePassword = async function (password) {
-    try {
-        return await bcrypt.compare(password, this.password);
-    } catch (error) {
-        throw error;
-    }
+    return await bcrypt.compare(password, this.password);
 };
 export const Student = mongoose.model('Student', studentSchema);

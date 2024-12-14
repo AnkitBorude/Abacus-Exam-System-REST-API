@@ -3,9 +3,11 @@ import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
-import { Result } from '../models/result.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
 import signToken from '../utils/jwttoken.util.js';
+import { HTTP_STATUS_CODES } from '../constants.js';
+import mongoose from 'mongoose';
+import { Result } from '../models/result.model.js';
 const registerStudent = asyncHandler(async (req, res) => {
     const { fullname, email, username, level, sclass, phone_no, password } =
         req.body;
@@ -35,7 +37,7 @@ const registerStudent = asyncHandler(async (req, res) => {
             phone_no,
             password,
         });
-        const savedStudent = await student.save();
+        await student.save();
         res.json(new Apiresponse('Student Registration Successfull', 200));
     } catch (error) {
         if (
@@ -55,24 +57,20 @@ const loginStudent = asyncHandler(async (req, res) => {
     let validParams = validatefields({ username, password });
     if (validParams.parameterisNull) {
         throw new Apierror(
-            401,
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
             validParams.parameterName + ' is / are null or undefined'
         );
     }
-    let student; //extracting the admin from the db
-    try {
-        student = await Student.findOne({ username });
-    } catch (error) {
-        throw new Apierror(402, error.message);
+    //extracting the student from the db
+  
+        let student = await Student.findOne({ username });
+    if (!student || student.is_deleted) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student does not exists');
     }
-    if (!student) {
-        throw new Apierror(403, 'Student username does not exists');
-    }
-
     if (!(await student.comparePassword(password))) {
         if (student.password != password) {
             //implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
-            throw new Apierror(405, 'Wrong Password');
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, 'Wrong Password');
         }
     }
     //adding jwt token
@@ -132,4 +130,60 @@ const getStudents = asyncHandler(async (req, res) => {
         .status(200)
         .json(new Apiresponse(students.map((s) => s.toJSON())));
 });
-export { registerStudent, loginStudent, getCurrentstudent, getStudents };
+
+const deleteStudent=asyncHandler(async(req,res)=>{
+//performing soft delete and hard delete of the student
+    let studentId = req.params.studentId;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+    studentId = new mongoose.Types.ObjectId(studentId);
+    let student = await Student.findById(studentId);
+    if (!student || student.is_deleted) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
+    }
+    const exists = await Result.findOne({ student: studentId }).lean().select('_id');
+    if (exists) {
+        //soft delete
+        student.is_deleted = true;
+        student.deletedAt = new Date();
+        //making the soft deleted students username reusable
+        student.username=student.username+"deletedAt"+Date.now();
+        await student.save();
+    } else {
+        //hard delete
+        await Student.deleteOne({ _id: student._id });
+    }
+    res.status(200).json(new Apiresponse(`Student deleted Successfully`, 200));
+
+});
+
+const deleteStudentAllRecord=asyncHandler(async(req,res)=>{
+
+    //remove all the results;
+    //remove the whole student
+    let studentId = req.params.studentId;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+    studentId = new mongoose.Types.ObjectId(studentId);
+    let student = await Student.findById(studentId);
+    if (!student) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Student Not found');
+    }
+
+    //delete all associated results
+   let deletedObj= await Result.deleteMany({ student: studentId });
+    //delete the student
+    await Student.deleteOne({ _id: student._id });
+
+    res.status(200).json(new Apiresponse(`Student and associated ${deletedObj.deletedCount} records deleted Successfully`, 200));
+});
+
+export { registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };

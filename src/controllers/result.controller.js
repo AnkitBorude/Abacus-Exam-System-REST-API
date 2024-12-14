@@ -33,7 +33,7 @@ const createResult = asyncHandler(async (req, res) => {
         exam,
         student: req.user,
     });
-    const finalresult = await result.save();
+    await result.save();
     return res
         .status(200)
         .json(new Apiresponse('Result created Successfully', 200));
@@ -45,7 +45,6 @@ const getResult = asyncHandler(async (req, res) => {
             HTTP_STATUS_CODES.BAD_REQUEST.code,
             'Invalid Result Id'
         );
-        return;
     }
     let resultId = new mongoose.Types.ObjectId(req.params.resultId);
     let result = await Result.findById(resultId)
