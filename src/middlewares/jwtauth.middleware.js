@@ -1,10 +1,13 @@
 import jwt from 'jsonwebtoken';
 import Apierror from '../utils/apierror.util.js';
+import process from "node:process"
+import { HTTP_STATUS_CODES } from '../constants.js';
 const authMiddleware = (req, res, next) => {
     try {
         const token = req.header('Authorization')?.split(' ')[1]; // Expect "Bearer <token>"
         if (!token) {
-            throw new Apierror(401, 'Authorization token required');
+            res.set('WWW-Authenticate', 'Bearer realm="API", error="token_required", error_description="Token is required"');
+            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, 'Authorization token required');
         }
         try {
             const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Verify token
@@ -16,7 +19,8 @@ const authMiddleware = (req, res, next) => {
             // Attach the decoded payload to the request object
             next();
         } catch (error) {
-            throw new Apierror(401, 'Invalid Token');
+            res.set('WWW-Authenticate', 'Bearer realm="API", error="invalid_token", error_description="Token is expired or invalid"');
+            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, 'Invalid Token'+error.message);
         }
     } catch (error) {
         return res.status(error.statusCode || 500).json({

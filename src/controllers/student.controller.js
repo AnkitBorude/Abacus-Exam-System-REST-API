@@ -189,6 +189,11 @@ const deleteStudentAllRecord=asyncHandler(async(req,res)=>{
 const updateStudent=asyncHandler(async(req,res)=>{
 
     let studentId = req.params.studentId;
+
+    if(!req.body || Object.keys(req.body).length === 0)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Request body cannot be empty.")
+    }
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -209,7 +214,7 @@ const updateStudent=asyncHandler(async(req,res)=>{
 
         //2 check whether the student is updating is own details or not
 
-        if(!exists._id.equals(new Mongoose.Types.ObjectId(req.user)))
+        if(!exists._id.equals(new mongoose.Types.ObjectId(req.user)))
         {
             throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Unauthorized access to edit details of other student");
         }
@@ -225,13 +230,16 @@ const updateStudent=asyncHandler(async(req,res)=>{
           );
           
           if (invalidFields.length > 0) {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
           }
           
           await Student.updateOne({_id:exists._id},{$set:{...req.body}},{runValidators:true});
 
-          res.status(200).json(`Student ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`);
+          res.status(200).json(new Apiresponse(`Student ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`,200));
     }
-    res.status(200).json("No update")
+    else
+    {
+    res.status(200).json("No update");
+    }
 });
 export { updateStudent,registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };
