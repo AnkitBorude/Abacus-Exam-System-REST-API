@@ -64,3 +64,21 @@ export const HTTP_STATUS_CODES = {
             'Too Many Requests - The client has sent too many requests in a given period.',
     },
 };
+
+export const updateFieldPolicy={
+    studentEntity:{
+        student:[],
+        admin:["level","is_deleted","deletedAt"],
+        both:["fullname","username","email","sclass","phone_no",]
+    },
+    examEntity:{
+        student:[],
+        admin:[],
+        both:[]
+    },
+    adminEntity:{
+        student:[],
+        admin:[],
+        both:[]
+    }
+}
