@@ -230,16 +230,37 @@ const updateStudent=asyncHandler(async(req,res)=>{
           );
           
           if (invalidFields.length > 0) {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
+            throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
           }
           
           await Student.updateOne({_id:exists._id},{$set:{...req.body}},{runValidators:true});
 
           res.status(200).json(new Apiresponse(`Student ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`,200));
     }
-    else
+    else if(req.role=="admin")
     {
-    res.status(200).json("No update");
+        const exists = await Student.findOne({ _id: studentId}).lean().select('_id');
+        if(!exists)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+        }
+
+        const updatesTobeDone=Object.keys(req.body);
+
+        const invalidFields = updatesTobeDone.filter(
+            key =>
+              !updateFieldPolicy.studentEntity.both.includes(key) &&
+              !updateFieldPolicy.studentEntity.admin.includes(key)
+          );
+          
+          if (invalidFields.length > 0) {
+            throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
+          }
+          
+          await Student.updateOne({_id:exists._id},{$set:{...req.body}},{runValidators:true});
+
+          res.status(200).json(new Apiresponse(`Following Student attribute: ${updatesTobeDone.join(' , ')} has been updated Successfully`,200));
+
     }
 });
 export { updateStudent,registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };
