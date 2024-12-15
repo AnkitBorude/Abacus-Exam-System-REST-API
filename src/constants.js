@@ -73,12 +73,12 @@ export const updateFieldPolicy={
     },
     examEntity:{
         student:[],
-        admin:[],
+        admin:["title","duration","level","is_active","isSingleAttempt","is_deleted","deletedAt"],
         both:[]
     },
     adminEntity:{
         student:[],
-        admin:[],
+        admin:["fullname","username","email"],
         both:[]
     }
 }

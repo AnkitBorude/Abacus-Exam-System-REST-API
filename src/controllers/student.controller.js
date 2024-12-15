@@ -6,7 +6,7 @@ import { Student } from '../models/student.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
 import signToken from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES,updateFieldPolicy } from '../constants.js';
-import mongoose, { Mongoose } from 'mongoose';
+import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 const registerStudent = asyncHandler(async (req, res) => {
     const { fullname, email, username, level, sclass, phone_no, password } =
