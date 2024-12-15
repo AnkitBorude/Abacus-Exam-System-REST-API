@@ -5,8 +5,8 @@ import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
 import signToken from '../utils/jwttoken.util.js';
-import { HTTP_STATUS_CODES } from '../constants.js';
-import mongoose from 'mongoose';
+import { HTTP_STATUS_CODES,updateFieldPolicy } from '../constants.js';
+import mongoose, { Mongoose } from 'mongoose';
 import { Result } from '../models/result.model.js';
 const registerStudent = asyncHandler(async (req, res) => {
     const { fullname, email, username, level, sclass, phone_no, password } =
@@ -186,4 +186,52 @@ const deleteStudentAllRecord=asyncHandler(async(req,res)=>{
     res.status(200).json(new Apiresponse(`Student and associated ${deletedObj.deletedCount} records deleted Successfully`, 200));
 });
 
-export { registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };
+const updateStudent=asyncHandler(async(req,res)=>{
+
+    let studentId = req.params.studentId;
+    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+
+    studentId = new mongoose.Types.ObjectId(studentId);
+    //check the role
+    if(req.role=="student")
+    {
+        //1 check student exists
+        const exists = await Student.findOne({ _id: studentId,is_deleted:false}).lean().select('_id');
+        if(!exists)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+        }
+
+        //2 check whether the student is updating is own details or not
+
+        if(!exists._id.equals(new Mongoose.Types.ObjectId(req.user)))
+        {
+            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Unauthorized access to edit details of other student");
+        }
+
+        //3 filter out the invalid fields sent in the request body
+
+        const updatesTobeDone=Object.keys(req.body);
+
+        const invalidFields = updatesTobeDone.filter(
+            key =>
+              !updateFieldPolicy.studentEntity.both.includes(key) &&
+              !updateFieldPolicy.studentEntity.student.includes(key)
+          );
+          
+          if (invalidFields.length > 0) {
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST,"Invalid or Unauthorized fields. following fields are not allowed: "+invalidFields.join(' , '));
+          }
+          
+          await Student.updateOne({_id:exists._id},{$set:{...req.body}},{runValidators:true});
+
+          res.status(200).json(`Student ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`);
+    }
+    res.status(200).json("No update")
+});
+export { updateStudent,registerStudent, loginStudent, getCurrentstudent, getStudents,deleteStudent,deleteStudentAllRecord };
