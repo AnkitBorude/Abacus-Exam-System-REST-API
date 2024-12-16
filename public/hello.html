@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>API Documentation</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      line-height: 1.6;
+      background-color: #f4f4f4;
+      color: #333;
+    }
+    header {
+      background: #0078d4;
+      color: #fff;
+      padding: 20px 10px;
+      text-align: center;
+    }
+    header h1 {
+      margin: 0;
+    }
+    .container {
+      padding: 20px;
+      max-width: 800px;
+      margin: 0 auto;
+      background: #fff;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+      border-radius: 5px;
+    }
+    .endpoint {
+      margin-bottom: 20px;
+    }
+    .endpoint h2 {
+      margin-bottom: 10px;
+      color: #0078d4;
+    }
+    .endpoint pre {
+      background: #f4f4f4;
+      padding: 10px;
+      border: 1px solid #ddd;
+      border-radius: 5px;
+      overflow-x: auto;
+    }
+    .endpoint code {
+      background: #eee;
+      padding: 2px 4px;
+      border-radius: 3px;
+      color: #0078d4;
+    }
+    footer {
+      text-align: center;
+      padding: 10px;
+      background: #333;
+      color: #fff;
+      position: fixed;
+      bottom: 0;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>API Documentation</h1>
+    <p>Your Guide to Using Our API</p>
+  </header>
+  <div class="container">
+    <div class="endpoint">
+      <h2>GET /api/v1/users</h2>
+      <p>Retrieve a list of all users.</p>
+      <pre><code>curl -X GET https://api.example.com/api/v1/users</code></pre>
+      <h3>Response:</h3>
+      <pre><code>
+[
+  {
+    "id": 1,
+    "name": "John Doe",
+    "email": "john.doe@example.com"
+  },
+  {
+    "id": 2,
+    "name": "Jane Smith",
+    "email": "jane.smith@example.com"
+  }
+]
+      </code></pre>
+    </div>
+
+    <div class="endpoint">
+      <h2>POST /api/v1/users</h2>
+      <p>Create a new user.</p>
+      <pre><code>curl -X POST https://api.example.com/api/v1/users -d '{
+  "name": "New User",
+  "email": "new.user@example.com"
+}'</code></pre>
+      <h3>Response:</h3>
+      <pre><code>
+{
+  "id": 3,
+  "name": "New User",
+  "email": "new.user@example.com",
+  "message": "User created successfully."
+}
+      </code></pre>
+    </div>
+
+    <div class="endpoint">
+      <h2>PUT /api/v1/users/:id</h2>
+      <p>Update an existing user.</p>
+      <pre><code>curl -X PUT https://api.example.com/api/v1/users/1 -d '{
+  "name": "Updated User",
+  "email": "updated.user@example.com"
+}'</code></pre>
+      <h3>Response:</h3>
+      <pre><code>
+{
+  "id": 1,
+  "name": "Updated User",
+  "email": "updated.user@example.com",
+  "message": "User updated successfully."
+}
+      </code></pre>
+    </div>
+
+    <div class="endpoint">
+      <h2>DELETE /api/v1/users/:id</h2>
+      <p>Delete a user by ID.</p>
+      <pre><code>curl -X DELETE https://api.example.com/api/v1/users/1</code></pre>
+      <h3>Response:</h3>
+      <pre><code>
+{
+  "message": "User deleted successfully."
+}
+      </code></pre>
+    </div>
+  </div>
+  <footer>
+    &copy; 2024 Your API Documentation. All rights reserved.
+  </footer>
+</body>
+</html>
