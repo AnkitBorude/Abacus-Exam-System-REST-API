@@ -65,20 +65,28 @@ export const HTTP_STATUS_CODES = {
     },
 };
 
-export const updateFieldPolicy={
-    studentEntity:{
-        student:[],
-        admin:["level","is_deleted","deletedAt"],
-        both:["fullname","username","email","sclass","phone_no",]
+export const updateFieldPolicy = {
+    studentEntity: {
+        student: [],
+        admin: ['level', 'is_deleted', 'deletedAt'],
+        both: ['fullname', 'username', 'email', 'sclass', 'phone_no'],
     },
-    examEntity:{
-        student:[],
-        admin:["title","duration","level","is_active","isSingleAttempt","is_deleted","deletedAt"],
-        both:[]
+    examEntity: {
+        student: [],
+        admin: [
+            'title',
+            'duration',
+            'level',
+            'is_active',
+            'isSingleAttempt',
+            'is_deleted',
+            'deletedAt',
+        ],
+        both: [],
     },
-    adminEntity:{
-        student:[],
-        admin:["fullname","username","email"],
-        both:[]
-    }
-}
+    adminEntity: {
+        student: [],
+        admin: ['fullname', 'username', 'email'],
+        both: [],
+    },
+};

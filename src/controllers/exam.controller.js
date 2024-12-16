@@ -7,7 +7,7 @@ import mcqGenerator from '../core/mcqGenerator.js';
 import { Student } from '../models/student.model.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
-import { HTTP_STATUS_CODES } from '../constants.js';
+import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 const createExam = asyncHandler(async (req, res) => {
     const { maxTerms, minNumber, maxNumber, operators, total_questions } =
         req.body;
@@ -380,10 +380,16 @@ const getStudents = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(students, 200));
 });
 
-
-
-const deleteResults=asyncHandler(async (req,res)=>{
+const deleteResults = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
+
+    if (!req.body || Object.keys(req.body).length === 0) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Request body cannot be empty.'
+        );
+    }
+
     if (!mongoose.Types.ObjectId.isValid(examId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -399,24 +405,104 @@ const deleteResults=asyncHandler(async (req,res)=>{
     }
 
     //role based access
-    if(req.role=="admin")
-    {
-        if(exam.created_by.equals(userId))
-        {
-            let deletedObj=await Result.deleteMany({exam:exam._id});
-            res.status(200).json(new Apiresponse(`Admin: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
-        }else
-        {
-            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Unauthorized cannot delete the results");
+    if (req.role == 'admin') {
+        if (exam.created_by.equals(userId)) {
+            let deletedObj = await Result.deleteMany({ exam: exam._id });
+            res.status(200).json(
+                new Apiresponse(
+                    `Admin: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`,
+                    200
+                )
+            );
+        } else {
+            throw new Apierror(
+                HTTP_STATUS_CODES.UNAUTHORIZED.code,
+                'Unauthorized cannot delete the results'
+            );
         }
-    }else if(req.role=="student")
-    {
-        let deletedObj=await Result.deleteMany({exam:exam._id,student:userId});
-        res.status(200).json(new Apiresponse(`Student: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`, 200));
+    } else if (req.role == 'student') {
+        let deletedObj = await Result.deleteMany({
+            exam: exam._id,
+            student: userId,
+        });
+        res.status(200).json(
+            new Apiresponse(
+                `Student: Successfully deleted ${deletedObj.deletedCount} results of ${exam.title}`,
+                200
+            )
+        );
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_ACCEPTABLE.code,
+            'Cannot delete'
+        );
     }
-    else
-    {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_ACCEPTABLE.code,"Cannot delete");
+});
+
+const updateExam = asyncHandler(async (req, res) => {
+    if (req.role == 'admin') {
+        let examId = req.params.examId;
+        if (!mongoose.Types.ObjectId.isValid(examId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+        examId = new mongoose.Types.ObjectId(examId);
+        let userId = new mongoose.Types.ObjectId(req.user);
+
+        const exists = await Exam.findOne({ _id: examId })
+            .lean()
+            .select('_id created_by');
+
+        if (!exists) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Exam Not Found'
+            );
+        }
+
+        //check whether the admin is editing the exam which is only created by him
+        if (!exists.created_by.equals(userId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.FORBIDDEN.code,
+                'Forbidden access to edit details of exam '
+            );
+        }
+
+        const updatesTobeDone = Object.keys(req.body);
+
+        const invalidFields = updatesTobeDone.filter(
+            (key) =>
+                !updateFieldPolicy.studentEntity.both.includes(key) &&
+                !updateFieldPolicy.studentEntity.admin.includes(key)
+        );
+
+        if (invalidFields.length > 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.FORBIDDEN.code,
+                'Invalid or Unauthorized fields. following fields are not allowed: ' +
+                    invalidFields.join(' , ')
+            );
+        }
+
+        await Student.updateOne(
+            { _id: exists._id },
+            { $set: { ...req.body } },
+            { runValidators: true }
+        );
+
+        res.status(200).json(
+            new Apiresponse(
+                `Exam ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`,
+                200
+            )
+        );
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.UNAUTHORIZED.code,
+            'Unauthorized cannot edit the exam details'
+        );
     }
 });
 export {
@@ -428,5 +514,6 @@ export {
     deactivateExam,
     getResults,
     getStudents,
-    deleteResults
+    deleteResults,
+    updateExam,
 };

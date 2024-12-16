@@ -94,8 +94,7 @@ const getResult = asyncHandler(async (req, res) => {
     }
 });
 
-const deleteResult=asyncHandler(async (req,res)=>{
-
+const deleteResult = asyncHandler(async (req, res) => {
     let resultId = req.params.resultId;
     if (!mongoose.Types.ObjectId.isValid(resultId)) {
         throw new Apierror(
@@ -106,12 +105,13 @@ const deleteResult=asyncHandler(async (req,res)=>{
     resultId = new mongoose.Types.ObjectId(resultId);
     let result = await Result.findById(resultId);
     if (!result) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Result Not found');
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'Result Not found'
+        );
     }
 
-    await Result.deleteOne({_id:result._id});
+    await Result.deleteOne({ _id: result._id });
     res.status(200).json(new Apiresponse(`Result Deleted Successfully`, 200));
-
-
 });
-export { createResult, getResult,deleteResult };
+export { createResult, getResult, deleteResult };
