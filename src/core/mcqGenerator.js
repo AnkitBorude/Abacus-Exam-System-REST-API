@@ -18,7 +18,6 @@ import OptionsGenerator from './lib/OptionsGenerator.js';
 const mcqGenerator = (config, totalQuestions = 1, marks = 1) => {
     let i = 0;
     let questions = [];
-
     //validation
     validateConfig(config);
     while (i < totalQuestions) {

@@ -560,8 +560,8 @@ const generateQuestions = asyncHandler(async (req, res) => {
             );
         }
 
-        let totalQuestions = parseInt(req.body.total_questions);
-        let marksPerQuestion = parseInt(req.body.total_marks_per_question);
+        let totalQuestions = req.body.total_questions ? parseInt(req.body.total_questions) : 1;
+        let marksPerQuestion = req.body.total_marks_per_question ? parseInt(req.body.total_marks_per_question) : 1;
 
         let generatedQuestions = mcqGenerator(
             {

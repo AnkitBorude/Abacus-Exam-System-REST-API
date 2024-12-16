@@ -10,6 +10,7 @@ import {
     deleteExam,
     deleteResults,
     updateExam,
+    generateQuestions,
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 const examRouter = Router();
@@ -27,4 +28,5 @@ examRouter
 examRouter.route('/:examId').delete(deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware, updateExam);
+examRouter.route('/:examId/questions').patch(authMiddleware,generateQuestions);
 export { examRouter };
