@@ -442,6 +442,14 @@ const deleteResults = asyncHandler(async (req, res) => {
 const updateExam = asyncHandler(async (req, res) => {
     if (req.role == 'admin') {
         let examId = req.params.examId;
+
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Request body cannot be empty.'
+            );
+        }
+
         if (!mongoose.Types.ObjectId.isValid(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -474,8 +482,8 @@ const updateExam = asyncHandler(async (req, res) => {
 
         const invalidFields = updatesTobeDone.filter(
             (key) =>
-                !updateFieldPolicy.studentEntity.both.includes(key) &&
-                !updateFieldPolicy.studentEntity.admin.includes(key)
+                !updateFieldPolicy.examEntity.both.includes(key) &&
+                !updateFieldPolicy.examEntity.admin.includes(key)
         );
 
         if (invalidFields.length > 0) {
@@ -486,7 +494,7 @@ const updateExam = asyncHandler(async (req, res) => {
             );
         }
 
-        await Student.updateOne(
+        await Exam.updateOne(
             { _id: exists._id },
             { $set: { ...req.body } },
             { runValidators: true }
