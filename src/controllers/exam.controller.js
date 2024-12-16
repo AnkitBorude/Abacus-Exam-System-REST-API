@@ -8,6 +8,7 @@ import { Student } from '../models/student.model.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
+
 const createExam = asyncHandler(async (req, res) => {
     const { maxTerms, minNumber, maxNumber, operators, total_questions } =
         req.body;
@@ -212,18 +213,6 @@ const deactivateExam = asyncHandler(async (req, res) => {
 });
 
 const deleteExam = asyncHandler(async (req, res) => {
-    /**
-     * extracting the exam id
-     * checking valid exam id(Object Id)
-     * checking the whether the any result associated with the intended exam
-     * if yes ->
-     *  then soft delete the exam via
-     *        setting the isDelete and DeletedAt attribute true
-     *        removing the questions of exams to free up some storage
-     *        setting the isActive as false
-     * else No->
-     *      directly remove the exam document
-     */
     let examId = req.params.examId;
     if (!mongoose.Types.ObjectId.isValid(examId)) {
         throw new Apierror(
@@ -513,6 +502,99 @@ const updateExam = asyncHandler(async (req, res) => {
         );
     }
 });
+
+const generateQuestions = asyncHandler(async (req, res) => {
+    if (req.role == 'admin') {
+        let examId = req.params.examId;
+
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Request body cannot be empty.'
+            );
+        }
+
+        if (!mongoose.Types.ObjectId.isValid(examId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+        examId = new mongoose.Types.ObjectId(examId);
+        let userId = new mongoose.Types.ObjectId(req.user);
+
+        const exists = await Exam.findOne({ _id: examId })
+            .lean()
+            .select('_id created_by');
+
+        if (!exists) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Exam Not Found'
+            );
+        }
+
+        //check whether the admin is editing the exam which is only created by him
+        if (!exists.created_by.equals(userId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.FORBIDDEN.code,
+                'Forbidden access to edit details of exam '
+            );
+        }
+
+
+        //in future need to add more validation using the joi
+        const updatesTobeDone = Object.keys(req.body);
+
+        const invalidFields = updatesTobeDone.filter(
+            (key) =>
+                !updateFieldPolicy.questionEntity.both.includes(key) &&
+                !updateFieldPolicy.questionEntity.admin.includes(key)
+        );
+
+        if (invalidFields.length > 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.FORBIDDEN.code,
+                'Invalid or Unauthorized fields. following fields are not allowed: ' +
+                    invalidFields.join(' , ')
+            );
+        }
+
+        let totalQuestions = parseInt(req.body.total_questions);
+        let marksPerQuestion = parseInt(req.body.total_marks_per_question);
+
+        let generatedQuestions = mcqGenerator(
+            {
+                maxTerms: req.body.maxTerms,
+                maxNumber: req.body.maxNumber,
+                minNumber: req.body.minNumber,
+                operators: req.body.operators,
+            },
+            totalQuestions,
+            marksPerQuestion
+        );
+
+        await Exam.updateOne(
+            { _id: exists._id },
+            {
+                questions: generatedQuestions,
+                total_questions: totalQuestions,
+                total_marks_per_question: marksPerQuestion,
+                total_marks: totalQuestions * marksPerQuestion,
+            },
+            { runValidators: true }
+        );
+
+        res.status(200).json(
+            new Apiresponse('Questions has been generated successfully', 200)
+        );
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.UNAUTHORIZED.code,
+            'Unauthorized cannot generate questions of the exam details'
+        );
+    }
+});
 export {
     deleteExam,
     createExam,
@@ -524,4 +606,5 @@ export {
     getStudents,
     deleteResults,
     updateExam,
+    generateQuestions,
 };

@@ -89,4 +89,17 @@ export const updateFieldPolicy = {
         admin: ['fullname', 'username', 'email'],
         both: [],
     },
+    questionEntity: {
+        //representing attributes to be fed to mcq generator
+        student: [],
+        admin: [
+            'maxTerms',
+            'minNumber',
+            'maxNumber',
+            'operators',
+            'total_questions',
+            'total_marks_per_question',
+        ],
+        both: [],
+    },
 };
