@@ -1,5 +1,5 @@
 import Joi from "joi";
-import { questionValidationschema } from "./questionValidation.middleware";
+import { questionValidationschema } from "./questionValidation.middleware.js";
 
 // Joi schema for exam validation
 const examValidationschema = Joi.object({

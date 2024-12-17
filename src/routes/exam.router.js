@@ -14,9 +14,10 @@ import {
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 import { questionValidation } from '../middlewares/questionValidation.middleware.js';
+import { examValidation } from '../middlewares/examValidation.middleware.js';
 const examRouter = Router();
 
-examRouter.route('/').post(authMiddleware, createExam);
+examRouter.route('/').post(authMiddleware,examValidation,createExam);
 examRouter.route('/').get(authMiddleware, getExams);
 examRouter.route('/:examId/questions').get(authMiddleware, getQuestions);
 examRouter.route('/:examId/activate').post(authMiddleware, activateExam);

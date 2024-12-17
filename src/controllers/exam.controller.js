@@ -1,7 +1,6 @@
 import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
-import { validatefields } from '../utils/validatereqfields.util.js';
 import { Exam } from '../models/exam.model.js';
 import mcqGenerator from '../core/mcqGenerator.js';
 import { Student } from '../models/student.model.js';
@@ -10,6 +9,14 @@ import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 
 const createExam = asyncHandler(async (req, res) => {
+    if(req.role=="admin")
+    {
+
+    if(req.validationError)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
+        }
+
     const { maxTerms, minNumber, maxNumber, operators, total_questions } =
         req.body;
     let qconfig = {
@@ -27,25 +34,6 @@ const createExam = asyncHandler(async (req, res) => {
         is_active,
         isSingleAttempt,
     } = req.body;
-
-    let validParams = validatefields({
-        ...qconfig,
-        ...{
-            title,
-            duration,
-            level,
-            total_marks_per_question,
-            is_active,
-            isSingleAttempt,
-        },
-    });
-
-    if (validParams.parameterisNull) {
-        throw new Apierror(
-            401,
-            validParams.parameterName + ' is null or undefined'
-        );
-    }
 
     let questions = mcqGenerator(
         qconfig,
@@ -67,10 +55,17 @@ const createExam = asyncHandler(async (req, res) => {
     });
 
     await exam.save();
-
     return res
         .status(200)
         .json(new Apiresponse('Exam Created Successfully'), 200);
+}
+else
+{
+    throw new Apierror(
+        HTTP_STATUS_CODES.UNAUTHORIZED.code,
+        'Unauthorized cannot create exam'
+    );
+}
 });
 
 //returns all the exams created by the admin and student by level
