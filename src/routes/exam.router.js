@@ -13,6 +13,7 @@ import {
     generateQuestions,
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
+import { questionValidation } from '../middlewares/questionValidation.middleware.js';
 const examRouter = Router();
 
 examRouter.route('/').post(authMiddleware, createExam);
@@ -28,5 +29,5 @@ examRouter
 examRouter.route('/:examId').delete(deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware, updateExam);
-examRouter.route('/:examId/questions').patch(authMiddleware,generateQuestions);
+examRouter.route('/:examId/questions').patch(questionValidation,generateQuestions);
 export { examRouter };

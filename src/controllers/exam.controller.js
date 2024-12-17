@@ -504,8 +504,18 @@ const updateExam = asyncHandler(async (req, res) => {
 });
 
 const generateQuestions = asyncHandler(async (req, res) => {
+
+//temporary putting the validation error handling out of request handling 
+//for testing purpose
+    if(req.validationError)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
+        }
+    
     if (req.role == 'admin') {
         let examId = req.params.examId;
+
+       
 
         if (!req.body || Object.keys(req.body).length === 0) {
             throw new Apierror(
@@ -584,7 +594,6 @@ const generateQuestions = asyncHandler(async (req, res) => {
             },
             { runValidators: true }
         );
-
         res.status(200).json(
             new Apiresponse('Questions has been generated successfully', 200)
         );
