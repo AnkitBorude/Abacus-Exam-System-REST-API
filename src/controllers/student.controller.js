@@ -9,47 +9,56 @@ import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 const registerStudent = asyncHandler(async (req, res) => {
-    const { fullname, email, username, level, sclass, phone_no, password } =
-        req.body;
-    let validParams = validatefields({
-        fullname,
-        email,
-        username,
-        level,
-        sclass,
-        phone_no,
-        password,
-    });
-    if (validParams.parameterisNull) {
-        throw new Apierror(
-            401,
-            validParams.parameterName + ' is are null or undefined'
-        );
+    if(req.validationError)
+    {
+        console.log(req.validationError);
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,""+req.validationError);
     }
-
-    try {
-        const student = await Student.create({
-            fullname,
-            email,
-            username,
-            level,
-            sclass,
-            phone_no,
-            password,
-        });
-        await student.save();
+    else
+    {
         res.json(new Apiresponse('Student Registration Successfull', 200));
-    } catch (error) {
-        if (
-            error.code === 11000 &&
-            error.keyPattern &&
-            error.keyPattern.username
-        ) {
-            throw new Apierror(402, 'Username already Exists');
-        } else {
-            throw new Apierror(402, error.message);
-        }
     }
+    // const { fullname, email, username, level, sclass, phone_no, password } =
+    //     req.body;
+    // let validParams = validatefields({
+    //     fullname,
+    //     email,
+    //     username,
+    //     level,
+    //     sclass,
+    //     phone_no,
+    //     password,
+    // });
+    // if (validParams.parameterisNull) {
+    //     throw new Apierror(
+    //         401,
+    //         validParams.parameterName + ' is are null or undefined'
+    //     );
+    // }
+
+    // try {
+    //     const student = await Student.create({
+    //         fullname,
+    //         email,
+    //         username,
+    //         level,
+    //         sclass,
+    //         phone_no,
+    //         password,
+    //     });
+    //     await student.save();
+    //     res.json(new Apiresponse('Student Registration Successfull', 200));
+    // } catch (error) {
+    //     if (
+    //         error.code === 11000 &&
+    //         error.keyPattern &&
+    //         error.keyPattern.username
+    //     ) {
+    //         throw new Apierror(402, 'Username already Exists');
+    //     } else {
+    //         throw new Apierror(402, error.message);
+    //     }
+    // }
 });
 
 const loginStudent = asyncHandler(async (req, res) => {

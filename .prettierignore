@@ -19,3 +19,6 @@ coverage/
 
 #ignore the shell script
 script/
+
+#ignore public folder for now
+public/

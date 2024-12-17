@@ -41,8 +41,12 @@ const studentValidationschema=Joi.object({
 
 const studentValidation=(req,res,next)=>{
 
-    const {error}=studentValidationschema.validateAsync(req.body);
-    req.validatioError=error;
+    const {error}=studentValidationschema.validate(req.body);
+    if(error)
+    {
+        //attaching the error message to req object
+        req.validationError=error.details[0].message;
+    }
     next();
 }
 
