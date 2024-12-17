@@ -29,5 +29,5 @@ examRouter
 examRouter.route('/:examId').delete(deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware, updateExam);
-examRouter.route('/:examId/questions').patch(questionValidation,generateQuestions);
+examRouter.route('/:examId/questions').patch(authMiddleware,questionValidation,generateQuestions);
 export { examRouter };

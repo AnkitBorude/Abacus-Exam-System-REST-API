@@ -4,24 +4,24 @@ let questionValidationschema = Joi.object({
     minNumber: Joi.number()
       .integer()
       .min(1)
-      .max(1000)
+      .max(999)
       .required()
       .messages({
         'number.base': 'minNumber must be a number.',
         'number.min': 'minNumber must be at least 1.',
-        'number.max': 'minNumber cannot exceed 1000.',
+        'number.max': 'minNumber cannot exceed 999.',
       }),
   
     maxNumber: Joi.number()
       .integer()
       .min(1)
-      .max(1000)
+      .max(999)
       .greater(Joi.ref('minNumber'))
       .required()
       .messages({
         'number.base': 'maxNumber must be a number.',
         'number.min': 'maxNumber must be at least 1.',
-        'number.max': 'maxNumber cannot exceed 1000.',
+        'number.max': 'maxNumber cannot exceed 999.',
         'number.greater': 'maxNumber must be greater than minNumber.',
       }),
   

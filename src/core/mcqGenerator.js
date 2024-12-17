@@ -62,7 +62,7 @@ const validateConfig = (config) => {
     }
 
     // Validate maxNumber (must be greater than or equal to minNumber and less than 1000)
-    if (config.maxNumber > config.minNumber || config.maxNumber >= 1000) {
+    if (config.maxNumber < config.minNumber || config.maxNumber >= 1000) {
         throw new Error(
             'Invalid maxNumber: must be a number greater than or equal to minNumber and less than 1000.'
         );

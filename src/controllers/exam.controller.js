@@ -511,12 +511,8 @@ const generateQuestions = asyncHandler(async (req, res) => {
         {
             throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
         }
-    
     if (req.role == 'admin') {
         let examId = req.params.examId;
-
-       
-
         if (!req.body || Object.keys(req.body).length === 0) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
