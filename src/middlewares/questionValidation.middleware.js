@@ -77,8 +77,7 @@ let questionValidationschema = Joi.object({
         'array.max': 'operators cannot contain more than four operators.',
         'array.unique': 'operators must contain unique values only.',
       }),
-  }).options({ allowUnknown: false }
-  );
+  }).options({ allowUnknown: false });
 
 const questionValidation=(req,res,next)=>{
 

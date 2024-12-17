@@ -68,7 +68,7 @@ export const HTTP_STATUS_CODES = {
 export const updateFieldPolicy = {
     studentEntity: {
         student: [],
-        admin: ['level', 'is_deleted', 'deletedAt'],
+        admin: ['level'],
         both: ['fullname', 'username', 'email', 'sclass', 'phone_no'],
     },
     examEntity: {
@@ -78,9 +78,7 @@ export const updateFieldPolicy = {
             'duration',
             'level',
             'is_active',
-            'isSingleAttempt',
-            'is_deleted',
-            'deletedAt',
+            'isSingleAttempt'
         ],
         both: [],
     },
