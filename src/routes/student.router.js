@@ -20,5 +20,5 @@ studentRouter.route('/:studentId').delete(authMiddleware, deleteStudent);
 studentRouter
     .route('/:studentId/clear')
     .delete(authMiddleware, deleteStudentAllRecord);
-studentRouter.route('/:studentId').patch(authMiddleware, updateStudent);
+studentRouter.route('/:studentId').patch(authMiddleware,studentValidation, updateStudent);
 export { studentRouter };
