@@ -10,6 +10,9 @@ import os from 'node:os';
 import config from 'config';
 import chalk from 'chalk';
 import getDbHealth from './db/db.health.js';
+/**
+ * @property()
+ */
 let server;
 let mongoDatabaseInstance;
 try {
@@ -95,7 +98,10 @@ try {
     process.on('SIGTERM', () => gracefullShutdown('SIGTERM'));
     process.on('SIGQUIT', () => gracefullShutdown('SIGQUIT'));
 } catch (error) {
+    if(server)
+    {
     gracefullShutdown('UnCaughtException');
+    }
     console.log(error);
     process.exit(1);
     //printing error on log/

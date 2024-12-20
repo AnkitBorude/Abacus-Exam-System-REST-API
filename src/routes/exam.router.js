@@ -27,7 +27,7 @@ examRouter.route('/:examId/students').get(authMiddleware, getStudents);
 examRouter
     .route('/:examId/students/:studentId/results')
     .get(authMiddleware, getResults);
-examRouter.route('/:examId').delete(deleteExam);
+examRouter.route('/:examId').delete(authMiddleware,deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware,examValidation,updateExam);
 examRouter.route('/:examId/questions').patch(authMiddleware,questionValidation,generateQuestions);

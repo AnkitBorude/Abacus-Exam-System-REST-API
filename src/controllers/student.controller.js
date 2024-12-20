@@ -112,7 +112,7 @@ const getStudents = asyncHandler(async (req, res) => {
     let students = null;
     try {
         students = await Student.find(query).select(
-            '-_id -password -refreshToken -__v'
+            '-password -refreshToken -__v'
         );
     } catch (error) {
         throw new Apierror(489, error.message);

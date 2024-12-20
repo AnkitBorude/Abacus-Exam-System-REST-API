@@ -62,12 +62,14 @@ studentSchema.set('toJSON', {
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
+        rec.student_id= rec._id;
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;
         delete rec.updatedAt;
         delete rec.refreshToken;
         delete rec.password;
+        delete rec.username;
         return rec;
     },
 });

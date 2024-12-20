@@ -231,7 +231,7 @@ const deleteExam = asyncHandler(async (req, res) => {
     } else {
         await Exam.deleteOne({ _id: exam._id });
     }
-    res.status(204).json(new Apiresponse('Exam deleted Successfully', 204));
+    res.status(200).json(new Apiresponse('Exam deleted Successfully', 200));
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only
@@ -260,6 +260,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
+                    result_id:"$_id",
                     student_name: { $arrayElemAt: ['$student.fullname', 0] },
                     student_email: { $arrayElemAt: ['$student.email', 0] },
                     student_class: { $arrayElemAt: ['$student.sclass', 0] },
@@ -271,6 +272,7 @@ const getResults = asyncHandler(async (req, res) => {
                     student: 0,
                     exam: 0,
                     __v: 0,
+                    _id:0
                 },
             },
         ]);
@@ -292,6 +294,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
+                    result_id:"$_id",
                     exam_name: { $arrayElemAt: ['$exam.title', 0] },
                     exam_duration: { $arrayElemAt: ['$exam.duration', 0] },
                     exam_level: { $arrayElemAt: ['$exam.level', 0] },
@@ -306,6 +309,7 @@ const getResults = asyncHandler(async (req, res) => {
                     student: 0,
                     exam: 0,
                     __v: 0,
+                    _id:0
                 },
             },
         ]);
@@ -342,18 +346,21 @@ const getStudents = asyncHandler(async (req, res) => {
         },
         {
             $group: {
-                _id: '$student._id',
+               _id: '$student._id',
                 documents: { $first: '$$ROOT' },
             },
         },
         {
             $project: {
                 student_id: '$documents.student._id',
-                student_name: '$documents.student.fullname',
-                student_email: '$documents.student.email',
-                student_level: '$documents.student.level',
-                student_class: '$documents.student.sclass',
-                student_phoneno: '$documents.student.phone_no',
+                fullname: '$documents.student.fullname',
+                email: '$documents.student.email',
+                level: '$documents.student.level',
+                sclass: '$documents.student.sclass',
+                phone_no: '$documents.student.phone_no',
+                is_deleted:'$documents.student.is_deleted',
+                deletedAt:'$documents.student.deletedAt',
+                _id:0
             },
         },
     ]);
@@ -366,13 +373,6 @@ const getStudents = asyncHandler(async (req, res) => {
 
 const deleteResults = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
-
-    if (!req.body || Object.keys(req.body).length === 0) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Request body cannot be empty.'
-        );
-    }
 
     if (!mongoose.Types.ObjectId.isValid(examId)) {
         throw new Apierror(
@@ -390,6 +390,7 @@ const deleteResults = asyncHandler(async (req, res) => {
 
     //role based access
     if (req.role == 'admin') {
+        console.log("admin requested to delete exam "+examId+"Results ");
         if (exam.created_by.equals(userId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(
@@ -405,6 +406,7 @@ const deleteResults = asyncHandler(async (req, res) => {
             );
         }
     } else if (req.role == 'student') {
+        console.log("admin requested to delete exam "+examId +"Results ");
         let deletedObj = await Result.deleteMany({
             exam: exam._id,
             student: userId,
