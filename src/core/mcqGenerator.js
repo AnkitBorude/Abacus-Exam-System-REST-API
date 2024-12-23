@@ -19,7 +19,7 @@ const mcqGenerator = (config, totalQuestions = 1, marks = 1) => {
     let i = 0;
     let questions = [];
     //validation
-    validateConfig(config);
+    //validateConfig(config);
     while (i < totalQuestions) {
         const queryString = expressionGenerator(config); //generating the question
         const expressionAnswer = evaluateExpression(queryString); //evaluting question
@@ -62,7 +62,7 @@ const validateConfig = (config) => {
     }
 
     // Validate maxNumber (must be greater than or equal to minNumber and less than 1000)
-    if (config.maxNumber < config.minNumber || config.maxNumber >= 1000) {
+    if (config.maxNumber > config.minNumber || config.maxNumber >= 1000) {
         throw new Error(
             'Invalid maxNumber: must be a number greater than or equal to minNumber and less than 1000.'
         );

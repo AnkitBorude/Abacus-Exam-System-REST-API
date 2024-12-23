@@ -67,9 +67,9 @@ export const HTTP_STATUS_CODES = {
 
 export const updateFieldPolicy = {
     studentEntity: {
-        student: [],
+        student: ['username'],
         admin: ['level'],
-        both: ['fullname', 'username', 'email', 'sclass', 'phone_no'],
+        both: ['fullname', 'email', 'sclass', 'phone_no'],
     },
     examEntity: {
         student: [],

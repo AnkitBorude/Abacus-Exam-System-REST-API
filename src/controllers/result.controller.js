@@ -59,8 +59,10 @@ const getResult = asyncHandler(async (req, res) => {
     }
     //check if the given route is the pdf route then
     //process the pdf
+    let jsonResult=result.toJSON();
+    delete jsonResult.student.student_id;
     if (req.query.format == 'pdf') {
-        let myarray = flattenObject(result.toJSON());
+        let myarray = flattenObject(jsonResult);
         //capitalizign the first word and replacing the_ and . with space.
         for (let item of myarray) {
             let userpoint = item[0];
