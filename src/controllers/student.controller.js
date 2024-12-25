@@ -4,7 +4,7 @@ import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
-import signToken from '../utils/jwttoken.util.js';
+import {signAccessToken,signRefreshToken} from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
@@ -52,7 +52,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     }
     //extracting the student from the db
 
-    let student = await Student.findOne({ username });
+    let student = await Student.findOne({ username }).select("_id is_deleted password username refreshToken");
     if (!student || student.is_deleted) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
@@ -68,16 +68,28 @@ const loginStudent = asyncHandler(async (req, res) => {
             );
         }
     }
-    //adding jwt token
-    const token = await signToken({
+    //adding Access jwt token
+    const token = await signAccessToken({
         studentId: student._id.toString(),
         role: 'student',
         username: student.username,
     });
+    //adding Refresh jwt token
+
+    const refreshToken=await signRefreshToken({
+        //sending student username intot the refresh token
+        username: student.username,
+        role: 'student'
+    });
+
+    //storing refreshToken in db
+    student.refreshToken=refreshToken;
+    await student.save();
+
     return res
         .status(200)
         .json(
-            new Apiresponse({ message: 'Login Successfull', token: token }, 200)
+            new Apiresponse({ message: 'Login Successfull', token: token,refreshToken }, 200)
         );
 });
 

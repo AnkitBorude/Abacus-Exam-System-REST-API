@@ -1,9 +1,15 @@
 import jwt from 'jsonwebtoken';
 import process from 'node:process';
-const signToken = async (payload) => {
-    const token = await jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
+const signAccessToken = async (payload) => {
+    const token = jwt.sign(payload, process.env.ACCESS_TOKEN_SECRET, {
         expiresIn: process.env.ACCESS_TOKEN_EXPIRY,
     });
     return token;
 };
-export default signToken;
+const signRefreshToken = async (payload) => {
+    const token = jwt.sign(payload, process.env.REFRESH_TOKEN_SECRET, {
+        expiresIn: process.env.REFRESH_TOKEN_EXPIRY,
+    });
+    return token;
+};
+export {signAccessToken,signRefreshToken};

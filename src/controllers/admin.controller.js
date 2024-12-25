@@ -4,7 +4,7 @@ import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Admin } from '../models/admin.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
-import signToken from '../utils/jwttoken.util.js';
+import{signAccessToken} from '../utils/jwttoken.util.js';
 
 const registerAdmin = asyncHandler(async (req, res) => {
     const { fullname, email, username, password } = req.body;
@@ -69,7 +69,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
         }
     }
     //generating access token
-    const jwtToken = await signToken({
+    const jwtToken = await signAccessToken({
         adminId: admin._id.toString(),
         role: 'admin',
         username: admin.username,
