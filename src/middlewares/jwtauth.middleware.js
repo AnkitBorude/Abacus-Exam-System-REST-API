@@ -3,17 +3,14 @@ import Apierror from '../utils/apierror.util.js';
 import process from 'node:process';
 import { HTTP_STATUS_CODES } from '../constants.js';
 const authMiddleware = (req, res, next) => {
-    try {
         const token = req.header('Authorization')?.split(' ')[1]; // Expect "Bearer <token>"
         if (!token) {
+            //setting the header
             res.set(
                 'WWW-Authenticate',
                 'Bearer realm="API", error="token_required", error_description="Token is required"'
             );
-            throw new Apierror(
-                HTTP_STATUS_CODES.UNAUTHORIZED.code,
-                'Authorization token required'
-            );
+             return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({...new Apierror(401,"Token not found"),message:"Access token is missing"});
         }
         try {
             const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Verify token
@@ -29,19 +26,23 @@ const authMiddleware = (req, res, next) => {
                 'WWW-Authenticate',
                 'Bearer realm="API", error="invalid_token", error_description="Token is expired or invalid"'
             );
-            throw new Apierror(
-                HTTP_STATUS_CODES.UNAUTHORIZED.code,
-                'Invalid Token' + error.message
-            );
+            if(error.name=="TokenExpiredError")
+            {
+                //if the token is expired
+                return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({...new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Token is Expired"),message:"Token is Expired"});
+
+            }
+            else if(error.name=="JsonWebTokenError")
+            {
+                //if the token is invalid
+                return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({...new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code,"Token is Invalid"),message:"Token is Invalid"});
+
+            }
+            else
+            {
+                return res.status(500).json({message:"Internal server error while verifying token"});
+            }
         }
-    } catch (error) {
-        return res.status(error.statusCode || 500).json({
-            error: error.message,
-            statusCode: error.statusCode,
-            timestamp: error.time,
-            success: false,
-        });
-    }
-};
+}
 
 export default authMiddleware;

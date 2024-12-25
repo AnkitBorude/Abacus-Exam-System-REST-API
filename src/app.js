@@ -4,7 +4,6 @@ import { adminRouter } from './routes/admin.router.js';
 import { examRouter } from './routes/exam.router.js';
 import { resultRouter } from './routes/result.router.js';
 import helmet from 'helmet';
-import Apierror from './utils/apierror.util.js';
 import jwt from 'jsonwebtoken';
 import process from 'node:process'
 const app = express();
@@ -31,8 +30,9 @@ app.post('/api/v1/verifytoken',(req,res)=>{
         res.json(decoded);
     }catch(error)
     {
+        console.log(error);
         res.status(error.statusCode || 500).json({
-            error: error.message,
+            error: error.name,
             statusCode: error.statusCode,
             timestamp: error.time,
             success: false,
