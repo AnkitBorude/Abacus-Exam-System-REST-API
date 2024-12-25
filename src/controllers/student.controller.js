@@ -341,8 +341,8 @@ const regenerateAccessToken=asyncHandler(async (req,res)=>{
         );
     }
 
-    try{
-    Joi.object({refreshToken: Joi
+    
+    const {error}=Joi.object({refreshToken: Joi
         .string()
         .required()
         .messages({
@@ -350,19 +350,18 @@ const regenerateAccessToken=asyncHandler(async (req,res)=>{
         'any.required': 'Refresh token is required',
       })
     }).options({allowUnknown: false}).validate(req.body);
-    }catch(error)
-        {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
-        }
-    
+    if(error)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
+    }
     
     try
     {
-       username=verifyRefreshToken(req.body.refreshToken);
+       username=await verifyRefreshToken(req.body.refreshToken);
     }
     catch(error)
     {
-        throw new Apierror(401,error);
+        throw new Apierror(401,error.message);
     }
 
     const exists = await Student.findOne({

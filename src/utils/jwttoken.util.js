@@ -15,8 +15,8 @@ const signRefreshToken = async (payload) => {
 
 const verifyRefreshToken=async(token)=>{
     try{
-        const username=jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
-        return username;
+        const decoded=jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
+        return decoded.username;
     }
     catch(error)
     {
