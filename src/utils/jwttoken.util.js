@@ -12,4 +12,30 @@ const signRefreshToken = async (payload) => {
     });
     return token;
 };
-export {signAccessToken,signRefreshToken};
+
+const verifyRefreshToken=async(token)=>{
+    try{
+        const username=jwt.verify(token,process.env.REFRESH_TOKEN_SECRET);
+        return username;
+    }
+    catch(error)
+    {
+        if(error.name=="TokenExpiredError")
+            {
+                //if the token is expired
+                throw new Error("Refresh Token is Expired Log in again");
+
+            }
+            else if(error.name=="JsonWebTokenError")
+            {
+                //if the token is invalid
+                throw new Error("Refresh Token is Invalid");
+
+            }
+            else
+            {
+               throw new Error("Internal server error while verifying token");
+            }
+    }
+}
+export {signAccessToken,signRefreshToken,verifyRefreshToken};
