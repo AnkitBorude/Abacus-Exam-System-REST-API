@@ -4,10 +4,11 @@ import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
-import signToken from '../utils/jwttoken.util.js';
+import {signAccessToken,signRefreshToken,verifyRefreshToken} from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
+import Joi from 'joi';
 const registerStudent = asyncHandler(async (req, res) => {
     if(req.validationError)
     {
@@ -52,7 +53,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     }
     //extracting the student from the db
 
-    let student = await Student.findOne({ username });
+    let student = await Student.findOne({ username }).select("_id is_deleted password username refreshToken");
     if (!student || student.is_deleted) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
@@ -68,16 +69,28 @@ const loginStudent = asyncHandler(async (req, res) => {
             );
         }
     }
-    //adding jwt token
-    const token = await signToken({
+    //adding Access jwt token
+    const token = await signAccessToken({
         studentId: student._id.toString(),
         role: 'student',
         username: student.username,
     });
+    //adding Refresh jwt token
+
+    const refreshToken=await signRefreshToken({
+        //sending student username intot the refresh token
+        username: student.username,
+        role: 'student'
+    });
+
+    //storing refreshToken in db
+    student.refreshToken=refreshToken;
+    await student.save();
+
     return res
         .status(200)
         .json(
-            new Apiresponse({ message: 'Login Successfull', token: token }, 200)
+            new Apiresponse({ message: 'Login Successfull', token: token,refreshToken }, 200)
         );
 });
 
@@ -310,6 +323,73 @@ const updateStudent = asyncHandler(async (req, res) => {
         );
     }
 });
+
+const regenerateAccessToken=asyncHandler(async (req,res)=>{
+
+    //check whether the body is not empty
+    //validate body has valid refreshToken using joi
+    //access refresh token and decode token
+    //check wehther the decoded username exists in the database
+    //if yes then match the refresh token
+    //regenerate access token and send back as response
+
+    let username=null;
+    if (!req.body || Object.keys(req.body).length === 0) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Request body cannot be empty.'
+        );
+    }
+
+    
+    const {error}=Joi.object({refreshToken: Joi
+        .string()
+        .required()
+        .messages({
+        'string.empty': 'Refresh token is required',
+        'any.required': 'Refresh token is required',
+      })
+    }).options({allowUnknown: false}).validate(req.body);
+    if(error)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
+    }
+    
+    try
+    {
+       username=await verifyRefreshToken(req.body.refreshToken);
+    }
+    catch(error)
+    {
+        throw new Apierror(401,error.message);
+    }
+
+    const exists = await Student.findOne({
+        username: username,
+        is_deleted: false,
+    }).lean().select('refreshToken _id username');
+
+    if (!exists) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'Student Not Found'
+        );
+    }
+    if(exists.refreshToken!=req.body.refreshToken)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Refresh Token does not match use valid token");
+    }
+
+    const accessToken = await signAccessToken({
+        studentId: exists._id.toString(),
+        role: 'student',
+        username: exists.username,
+    });
+
+    res.status(200).json(new Apiresponse({message:"New token generated successfully..",token:accessToken}));
+
+});
+
 export {
     updateStudent,
     registerStudent,
@@ -318,4 +398,5 @@ export {
     getStudents,
     deleteStudent,
     deleteStudentAllRecord,
+    regenerateAccessToken
 };

@@ -18,4 +18,14 @@ app.use('/api/v1/result', resultRouter);
 app.get('/api/v1/echo', (req, res) => {
     res.json({ echoed: true });
 });
+
+app.use((err, req, res, next) => {
+    // Handle all other errors
+    res.status(err.status || 500).json({
+        error: "Internal Server Error",
+        message: err.message || "An unexpected error occurred.",
+    });
+    return next;
+});
+
 export { app };
