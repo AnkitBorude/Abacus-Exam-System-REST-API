@@ -98,9 +98,8 @@ try {
     process.on('SIGTERM', () => gracefullShutdown('SIGTERM'));
     process.on('SIGQUIT', () => gracefullShutdown('SIGQUIT'));
 } catch (error) {
-    if(server)
-    {
-    gracefullShutdown('UnCaughtException');
+    if (server) {
+        gracefullShutdown('UnCaughtException');
     }
     console.log(error);
     process.exit(1);

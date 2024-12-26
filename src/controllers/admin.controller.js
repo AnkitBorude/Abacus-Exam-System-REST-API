@@ -4,7 +4,11 @@ import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Admin } from '../models/admin.model.js';
 import { validatefields } from '../utils/validatereqfields.util.js';
-import{signAccessToken,signRefreshToken,verifyRefreshToken} from '../utils/jwttoken.util.js';
+import {
+    signAccessToken,
+    signRefreshToken,
+    verifyRefreshToken,
+} from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
 
@@ -77,16 +81,19 @@ const loginAdmin = asyncHandler(async (req, res) => {
         username: admin.username,
     });
 
-    const refreshToken=await signRefreshToken({
+    const refreshToken = await signRefreshToken({
         //sending student username intot the refresh token
         username: admin.username,
-        role: 'admin'
+        role: 'admin',
     });
 
-   admin.refreshToken=refreshToken;
-   await admin.save();
+    admin.refreshToken = refreshToken;
+    await admin.save();
     res.status(200).json(
-        new Apiresponse({ message: 'Login Successfull', token: jwtToken,refreshToken }, 200)
+        new Apiresponse(
+            { message: 'Login Successfull', token: jwtToken, refreshToken },
+            200
+        )
     );
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
@@ -101,8 +108,7 @@ const getCurrentAdmin = asyncHandler(async (req, res) => {
     }
 });
 
-const regenerateAccessToken=asyncHandler(async (req,res)=>{
-
+const regenerateAccessToken = asyncHandler(async (req, res) => {
     //check whether the body is not empty
     //validate body has valid refreshToken using joi
     //access refresh token and decode token
@@ -110,50 +116,50 @@ const regenerateAccessToken=asyncHandler(async (req,res)=>{
     //if yes then match the refresh token
     //regenerate access token and send back as response
 
-    let username=null;
+    let username = null;
     if (!req.body || Object.keys(req.body).length === 0) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
             'Request body cannot be empty.'
         );
     }
-    
-    const {error}=Joi.object({refreshToken: Joi
-        .string()
-        .required()
-        .messages({
-        'string.empty': 'Refresh token is required',
-        'any.required': 'Refresh token is required',
-      })
-    }).options({allowUnknown: false}).validate(req.body);
-    if(error)
-    {
-        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
+
+    const { error } = Joi.object({
+        refreshToken: Joi.string().required().messages({
+            'string.empty': 'Refresh token is required',
+            'any.required': 'Refresh token is required',
+        }),
+    })
+        .options({ allowUnknown: false })
+        .validate(req.body);
+    if (error) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            error.details[0].message
+        );
     }
-    
-    try
-    {
-       username=await verifyRefreshToken(req.body.refreshToken);
-    }
-    catch(error)
-    {
-        throw new Apierror(401,error.message);
+
+    try {
+        username = await verifyRefreshToken(req.body.refreshToken);
+    } catch (error) {
+        throw new Apierror(401, error.message);
     }
 
     const exists = await Admin.findOne({
         username: username,
         is_deleted: false,
-    }).lean().select('refreshToken _id username');
+    })
+        .lean()
+        .select('refreshToken _id username');
 
     if (!exists) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.NOT_FOUND.code,
-            'Admin Not Found'
-        );
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Admin Not Found');
     }
-    if(exists.refreshToken!=req.body.refreshToken)
-    {
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Refresh Token does not match use valid token");
+    if (exists.refreshToken != req.body.refreshToken) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Refresh Token does not match use valid token'
+        );
     }
 
     const accessToken = await signAccessToken({
@@ -162,8 +168,12 @@ const regenerateAccessToken=asyncHandler(async (req,res)=>{
         username: exists.username,
     });
 
-    res.status(200).json(new Apiresponse({message:"New token generated successfully..",token:accessToken}));
-
+    res.status(200).json(
+        new Apiresponse({
+            message: 'New token generated successfully..',
+            token: accessToken,
+        })
+    );
 });
 
-export { registerAdmin, loginAdmin, getCurrentAdmin,regenerateAccessToken };
+export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken };

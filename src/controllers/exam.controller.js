@@ -9,63 +9,61 @@ import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 
 const createExam = asyncHandler(async (req, res) => {
-    if(req.role=="admin")
-    {
-
-    if(req.validationError)
-        {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
+    if (req.role == 'admin') {
+        if (req.validationError) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                req.validationError
+            );
         }
 
-    const { maxTerms, minNumber, maxNumber, operators, total_questions } =
-        req.body;
-    let qconfig = {
-        maxTerms,
-        minNumber,
-        maxNumber,
-        operators,
-        total_questions,
-    };
-    const {
-        title,
-        duration,
-        level,
-        total_marks_per_question,
-        is_active,
-        isSingleAttempt,
-    } = req.body;
+        const { maxTerms, minNumber, maxNumber, operators, total_questions } =
+            req.body;
+        let qconfig = {
+            maxTerms,
+            minNumber,
+            maxNumber,
+            operators,
+            total_questions,
+        };
+        const {
+            title,
+            duration,
+            level,
+            total_marks_per_question,
+            is_active,
+            isSingleAttempt,
+        } = req.body;
 
-    let questions = mcqGenerator(
-        qconfig,
-        total_questions,
-        total_marks_per_question
-    );
+        let questions = mcqGenerator(
+            qconfig,
+            total_questions,
+            total_marks_per_question
+        );
 
-    const exam = new Exam({
-        title,
-        duration,
-        level,
-        total_marks: total_questions * total_marks_per_question,
-        total_marks_per_question,
-        total_questions,
-        is_active,
-        isSingleAttempt,
-        created_by: req.user,
-        questions: questions,
-    });
+        const exam = new Exam({
+            title,
+            duration,
+            level,
+            total_marks: total_questions * total_marks_per_question,
+            total_marks_per_question,
+            total_questions,
+            is_active,
+            isSingleAttempt,
+            created_by: req.user,
+            questions: questions,
+        });
 
-    await exam.save();
-    return res
-        .status(200)
-        .json(new Apiresponse('Exam Created Successfully'), 200);
-}
-else
-{
-    throw new Apierror(
-        HTTP_STATUS_CODES.UNAUTHORIZED.code,
-        'Unauthorized cannot create exam'
-    );
-}
+        await exam.save();
+        return res
+            .status(200)
+            .json(new Apiresponse('Exam Created Successfully'), 200);
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.UNAUTHORIZED.code,
+            'Unauthorized cannot create exam'
+        );
+    }
 });
 
 //returns all the exams created by the admin and student by level
@@ -260,7 +258,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id:"$_id",
+                    result_id: '$_id',
                     student_name: { $arrayElemAt: ['$student.fullname', 0] },
                     student_email: { $arrayElemAt: ['$student.email', 0] },
                     student_class: { $arrayElemAt: ['$student.sclass', 0] },
@@ -272,7 +270,7 @@ const getResults = asyncHandler(async (req, res) => {
                     student: 0,
                     exam: 0,
                     __v: 0,
-                    _id:0
+                    _id: 0,
                 },
             },
         ]);
@@ -294,7 +292,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id:"$_id",
+                    result_id: '$_id',
                     exam_name: { $arrayElemAt: ['$exam.title', 0] },
                     exam_duration: { $arrayElemAt: ['$exam.duration', 0] },
                     exam_level: { $arrayElemAt: ['$exam.level', 0] },
@@ -309,7 +307,7 @@ const getResults = asyncHandler(async (req, res) => {
                     student: 0,
                     exam: 0,
                     __v: 0,
-                    _id:0
+                    _id: 0,
                 },
             },
         ]);
@@ -346,7 +344,7 @@ const getStudents = asyncHandler(async (req, res) => {
         },
         {
             $group: {
-               _id: '$student._id',
+                _id: '$student._id',
                 documents: { $first: '$$ROOT' },
             },
         },
@@ -358,9 +356,9 @@ const getStudents = asyncHandler(async (req, res) => {
                 level: '$documents.student.level',
                 sclass: '$documents.student.sclass',
                 phone_no: '$documents.student.phone_no',
-                is_deleted:'$documents.student.is_deleted',
-                deletedAt:'$documents.student.deletedAt',
-                _id:0
+                is_deleted: '$documents.student.is_deleted',
+                deletedAt: '$documents.student.deletedAt',
+                _id: 0,
             },
         },
     ]);
@@ -390,7 +388,7 @@ const deleteResults = asyncHandler(async (req, res) => {
 
     //role based access
     if (req.role == 'admin') {
-        console.log("admin requested to delete exam "+examId+"Results ");
+        console.log('admin requested to delete exam ' + examId + 'Results ');
         if (exam.created_by.equals(userId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(
@@ -406,7 +404,7 @@ const deleteResults = asyncHandler(async (req, res) => {
             );
         }
     } else if (req.role == 'student') {
-        console.log("admin requested to delete exam "+examId +"Results ");
+        console.log('admin requested to delete exam ' + examId + 'Results ');
         let deletedObj = await Result.deleteMany({
             exam: exam._id,
             student: userId,
@@ -426,14 +424,15 @@ const deleteResults = asyncHandler(async (req, res) => {
 });
 
 const updateExam = asyncHandler(async (req, res) => {
-
     if (req.role == 'admin') {
         let examId = req.params.examId;
 
-        if(req.validationError)
-            {
-                throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
-            }
+        if (req.validationError) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                req.validationError
+            );
+        }
         if (!req.body || Object.keys(req.body).length === 0) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -506,16 +505,16 @@ const updateExam = asyncHandler(async (req, res) => {
 });
 
 const generateQuestions = asyncHandler(async (req, res) => {
+    //temporary putting the validation error handling out of request handling
+    //for testing purpose
 
-//temporary putting the validation error handling out of request handling 
-//for testing purpose
-   
     if (req.role == 'admin') {
-
-        if(req.validationError)
-            {
-                throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,req.validationError);
-            }
+        if (req.validationError) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                req.validationError
+            );
+        }
         let examId = req.params.examId;
         if (!req.body || Object.keys(req.body).length === 0) {
             throw new Apierror(
@@ -552,7 +551,6 @@ const generateQuestions = asyncHandler(async (req, res) => {
             );
         }
 
-
         //in future need to add more validation using the joi
         const updatesTobeDone = Object.keys(req.body);
 
@@ -570,8 +568,12 @@ const generateQuestions = asyncHandler(async (req, res) => {
             );
         }
 
-        let totalQuestions = req.body.total_questions ? parseInt(req.body.total_questions) : 1;
-        let marksPerQuestion = req.body.total_marks_per_question ? parseInt(req.body.total_marks_per_question) : 1;
+        let totalQuestions = req.body.total_questions
+            ? parseInt(req.body.total_questions)
+            : 1;
+        let marksPerQuestion = req.body.total_marks_per_question
+            ? parseInt(req.body.total_marks_per_question)
+            : 1;
 
         let generatedQuestions = mcqGenerator(
             {

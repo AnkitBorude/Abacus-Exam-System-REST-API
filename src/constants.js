@@ -73,13 +73,7 @@ export const updateFieldPolicy = {
     },
     examEntity: {
         student: [],
-        admin: [
-            'title',
-            'duration',
-            'level',
-            'is_active',
-            'isSingleAttempt'
-        ],
+        admin: ['title', 'duration', 'level', 'is_active', 'isSingleAttempt'],
         both: [],
     },
     adminEntity: {

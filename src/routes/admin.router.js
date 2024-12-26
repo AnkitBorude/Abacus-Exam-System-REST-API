@@ -3,7 +3,7 @@ import {
     registerAdmin,
     loginAdmin,
     getCurrentAdmin,
-    regenerateAccessToken
+    regenerateAccessToken,
 } from '../controllers/admin.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 const adminRouter = Router();
