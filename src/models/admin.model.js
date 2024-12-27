@@ -32,6 +32,14 @@ const adminSchema = new mongoose.Schema(
             type: String,
             default: ' ',
         },
+        is_deleted: {
+            type: Boolean,
+            default: false,
+        },
+        deletedAt: {
+            type: Date,
+            default: null,
+        },
     },
     { timestamps: true }
 );

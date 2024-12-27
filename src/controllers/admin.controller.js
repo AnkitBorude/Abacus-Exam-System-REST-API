@@ -45,33 +45,39 @@ const registerAdmin = asyncHandler(async (req, res) => {
 });
 const loginAdmin = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
-
-    let validParams = validatefields({ username, password });
-
-    if (validParams.parameterisNull) {
-        throw new Apierror(
-            401,
-            validParams.parameterName + ' is are null or undefined'
-        );
-    }
+    const { error } = Joi.object({
+        username: Joi.string().alphanum().min(3).max(30).required(),
+         password: Joi.string().min(8).max(128).required().messages({
+                'string.min': 'password must be at least 8 characters long.',
+                'string.max': 'password must not exceed 128 characters.',
+            })
+   })
+       .options({ allowUnknown: false })
+       .validate(req.body);
+   if (error) {
+       throw new Apierror(
+           HTTP_STATUS_CODES.BAD_REQUEST.code,
+           error.details[0].message
+       );
+   }
 
     let admin; //extracting the admin from the db
     try {
         admin = await Admin.findOne({ username });
     } catch (error) {
-        throw new Apierror(402, error.message);
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
-    if (!admin) {
+    if (!admin || admin.is_deleted) {
         throw new Apierror(
-            403,
-            'Admin account with provided credentials does not exists'
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'Admin Account not found with given username'
         );
     }
     //comparing password
     if (!(await admin.comparePassword(password))) {
         if (admin.password != password) {
             //implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
-            throw new Apierror(405, 'Wrong Password');
+            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, 'Wrong Password');
         }
     }
     //generating access token

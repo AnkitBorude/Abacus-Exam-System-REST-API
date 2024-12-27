@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Student } from '../models/student.model.js';
-import { validatefields } from '../utils/validatereqfields.util.js';
 import {
     signAccessToken,
     signRefreshToken,
@@ -13,6 +12,7 @@ import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 import Joi from 'joi';
+
 const registerStudent = asyncHandler(async (req, res) => {
     if (req.validationError) {
         throw new Apierror(
@@ -34,27 +34,35 @@ const registerStudent = asyncHandler(async (req, res) => {
             password,
         });
         await student.save();
-        res.json(new Apiresponse('Student Registration Successfull', 200));
+        res.status(201).json(new Apiresponse('Student Registration Successfull', 201));
     } catch (error) {
         if (
             error.code === 11000 &&
             error.keyPattern &&
             error.keyPattern.username
         ) {
-            throw new Apierror(402, 'Username already Exists');
+            throw new Apierror(HTTP_STATUS_CODES.CONFLICT.code, 'Username already Exists');
         } else {
-            throw new Apierror(402, error.message);
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
         }
     }
 });
 
 const loginStudent = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
-    let validParams = validatefields({ username, password });
-    if (validParams.parameterisNull) {
+    const { error } = Joi.object({
+          username: Joi.string().alphanum().min(3).max(30).required(),
+          password: Joi.string().min(8).max(128).required().messages({
+                 'string.min': 'password must be at least 8 characters long.',
+                 'string.max': 'password must not exceed 128 characters.',
+             }),
+    })
+        .options({ allowUnknown: false })
+        .validate(req.body);
+    if (error) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
-            validParams.parameterName + ' is / are null or undefined'
+            error.details[0].message
         );
     }
     //extracting the student from the db
@@ -72,7 +80,7 @@ const loginStudent = asyncHandler(async (req, res) => {
         if (student.password != password) {
             //implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
             throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                HTTP_STATUS_CODES.UNAUTHORIZED.code,
                 'Wrong Password'
             );
         }
@@ -107,12 +115,13 @@ const loginStudent = asyncHandler(async (req, res) => {
 
 const getCurrentstudent = asyncHandler(async (req, res) => {
     try {
-        let student = await Student.findById(req.user);
+        let student = await Student.findById(req.user).select("-deletedAt -is_deleted");
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
     } catch (error) {
         throw new Apierror(441, error.message);
     }
+
 });
 
 /**
