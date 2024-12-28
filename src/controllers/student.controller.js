@@ -119,7 +119,7 @@ const getCurrentstudent = asyncHandler(async (req, res) => {
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
     } catch (error) {
-        throw new Apierror(441, error.message);
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
 
 });
@@ -130,6 +130,8 @@ const getCurrentstudent = asyncHandler(async (req, res) => {
  * given query string name
  */
 const getStudents = asyncHandler(async (req, res) => {
+    if(req.role=="admin")
+    {
     const { class: classQuery, level, name } = req.query;
 
     const query = {};
@@ -156,11 +158,18 @@ const getStudents = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .json(new Apiresponse(students.map((s) => s.toJSON())));
+        .json(new Apiresponse(students.map((s) => s.toJSON()),200));
+}
+else
+{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden")
+}
 });
 
 const deleteStudent = asyncHandler(async (req, res) => {
     //performing soft delete and hard delete of the student
+    if(req.role=="admin")
+    {
     let studentId = req.params.studentId;
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
         throw new Apierror(
@@ -191,11 +200,17 @@ const deleteStudent = asyncHandler(async (req, res) => {
         await Student.deleteOne({ _id: student._id });
     }
     res.status(200).json(new Apiresponse(`Student deleted Successfully`, 200));
+}else{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden Access");
+}
 });
 
 const deleteStudentAllRecord = asyncHandler(async (req, res) => {
     //remove all the results;
     //remove the whole student
+    if(req.role=="admin")
+    {
+
     let studentId = req.params.studentId;
     if (!mongoose.Types.ObjectId.isValid(studentId)) {
         throw new Apierror(
@@ -223,6 +238,11 @@ const deleteStudentAllRecord = asyncHandler(async (req, res) => {
             200
         )
     );
+}
+else
+{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden Access");
+}
 });
 
 const updateStudent = asyncHandler(async (req, res) => {

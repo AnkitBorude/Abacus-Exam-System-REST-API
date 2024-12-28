@@ -15,7 +15,7 @@ const studentRouter = Router();
 
 studentRouter.route('/register').post(studentValidation, registerStudent);
 studentRouter.route('/login').post(loginStudent);
-studentRouter.route('/').get(getStudents);
+studentRouter.route('/').get(authMiddleware,getStudents);
 studentRouter.route('/me').get(authMiddleware, getCurrentstudent);
 studentRouter.route('/:studentId').delete(authMiddleware, deleteStudent);
 studentRouter

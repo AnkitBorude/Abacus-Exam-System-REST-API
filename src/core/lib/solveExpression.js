@@ -3,7 +3,7 @@ const evaluateExpression = (expression) => {
     expression = expression.replace(/\s/g, '');
 
     // Split the expression into an array of numbers and operators
-    const tokens = expression.match(/(\d+\.?\d*|\+|\-|\*|\/)/g);
+    const tokens = expression.match(/(\d+\.?\d*|\+|-|\*|\/)/g);
 
     if (!tokens) {
         throw new Error('Invalid expression');
@@ -26,8 +26,17 @@ const evaluateExpression = (expression) => {
         }
     }
 
+    let operationCount = 0;
+    const maxOperations = tokens.length * 2;
+
     // First, handle multiplication and division
     for (let i = 1; i < tokens.length; i += 2) {
+
+        operationCount++;
+        if (operationCount > maxOperations) {
+            throw new Error('Potential infinite loop detected during multiplication/division processing');
+        }
+        console.log("handling multiplication and division"+ operationCount);
         if (tokens[i] === '*' || tokens[i] === '/') {
             const result = operate(
                 parseInt(tokens[i - 1]),
@@ -41,7 +50,13 @@ const evaluateExpression = (expression) => {
 
     // Then, handle addition and subtraction
     let result = parseInt(tokens[0]);
+    operationCount = 0;
     for (let i = 1; i < tokens.length; i += 2) {
+        operationCount++;
+        console.log("handling addition and substraction "+operationCount);
+        if (operationCount > maxOperations) {
+            throw new Error('Potential infinite loop detected during addition/subtraction processing');
+        }
         result = operate(result, parseInt(tokens[i + 1]), tokens[i]);
     }
 
