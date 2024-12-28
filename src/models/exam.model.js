@@ -54,7 +54,7 @@ const examSchema = new mongoose.Schema(
 
 examSchema.set('toJSON', {
     transform: (doc, rec) => {
-        rec.id = rec._id.toString();
+        rec.exam_id = rec._id.toString();
         delete rec.__v;
         delete rec.questions;
         delete rec._id;

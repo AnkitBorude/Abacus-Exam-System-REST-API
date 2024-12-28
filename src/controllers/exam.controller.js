@@ -9,6 +9,7 @@ import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 
 const createExam = asyncHandler(async (req, res) => {
+    console.log(req.role);
     if (req.role == 'admin') {
         if (req.validationError) {
             throw new Apierror(
@@ -147,7 +148,7 @@ const getExams = asyncHandler(async (req, res) => {
         );
         if (exam.length == 0) {
             throw new Apierror(
-                456,
+                HTTP_STATUS_CODES.NOT_FOUND.code,
                 'No Matching Exam Found with level ' + studentLevel
             );
         }
@@ -256,21 +257,33 @@ const getResults = asyncHandler(async (req, res) => {
                     as: 'student',
                 },
             },
+
+            {
+                $unwind: {
+                    path: "$student", // Unwinds the array into a single subdocument
+                    preserveNullAndEmptyArrays: true, // Optional: Keeps documents without matches
+                },
+            },
             {
                 $addFields: {
                     result_id: '$_id',
-                    student_name: { $arrayElemAt: ['$student.fullname', 0] },
-                    student_email: { $arrayElemAt: ['$student.email', 0] },
-                    student_class: { $arrayElemAt: ['$student.sclass', 0] },
-                    student_phoneno: { $arrayElemAt: ['$student.phone_no', 0] },
+                    "student.student_id":'$student._id'
                 },
             },
             {
                 $project: {
-                    student: 0,
-                    exam: 0,
                     __v: 0,
                     _id: 0,
+                    createdAt:0,
+                    updatedAt:0,
+                    exam:0,
+                    "student.password":0,
+                    "student._id":0,
+                    "student.username":0,
+                    "student.refreshToken":0,
+                    "student.createdAt":0,
+                    "student.updatedAt":0,
+                    "student.__v":0
                 },
             },
         ]);
