@@ -8,6 +8,7 @@ import { flattenObject } from '../utils/flattenObject.util.js';
 import { Pdftemplet } from '../pdftemplets/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
+import { Exam } from '../models/exam.model.js';
 
 const createResult = asyncHandler(async (req, res) => {
     const { score, time_taken, total_correct, date_completed, exam } = req.body;
@@ -58,6 +59,43 @@ const createResult = asyncHandler(async (req, res) => {
             HTTP_STATUS_CODES.BAD_REQUEST.code,
             error.details[0].message
         );
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(exam)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    let examId = new mongoose.Types.ObjectId(exam);
+
+    let dbexam=await Exam.findById(examId).select("duration total_marks total_questions is_deleted total_marks_per_question");
+
+    if(!dbexam || dbexam.is_deleted)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
+    }
+
+    //validate result
+
+    if(time_taken>dbexam.duration)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,`Time Taken cannot be greater than exam duration of ${dbexam.duration}`);
+    }
+
+    if(score>dbexam.total_marks)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Score cannot be greater than Exam Total Marks ");
+    }
+
+    if(total_correct>dbexam.total_questions)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Total Correct cannot be greater than Total Questions");
+    }
+
+    if((total_correct*dbexam.total_marks_per_question)!=score)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,`Invalid score marks per question are ${dbexam.total_marks_per_question}`);
     }
 
     const result = new Result({
