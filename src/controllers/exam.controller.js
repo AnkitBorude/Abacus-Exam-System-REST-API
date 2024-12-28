@@ -115,7 +115,7 @@ const getExams = asyncHandler(async (req, res) => {
                     'exam.total_attended': '$total_attended',
                     'exam.highest_score': '$highest_score',
                     'exam.unique_students': { $size: '$students' },
-                    'exam.id': '$_id',
+                    'exam.exam_id': '$_id',
                 },
             },
             {
@@ -314,7 +314,7 @@ const getResults = asyncHandler(async (req, res) => {
     }
 
     if (results.length == 0) {
-        throw new Apierror(456, 'No Result Found');
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Associated Result Found For this Exam');
     }
 
     return res.status(200).json(new Apiresponse(results, 200));
@@ -363,7 +363,7 @@ const getStudents = asyncHandler(async (req, res) => {
         },
     ]);
     if (students.length == 0) {
-        throw new Apierror(456, 'No Student Found');
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Student Found');
     }
 
     return res.status(200).json(new Apiresponse(students, 200));

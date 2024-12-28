@@ -1,27 +1,62 @@
 import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
-import { validatefields } from '../utils/validatereqfields.util.js';
 import { Result } from '../models/result.model.js';
 import { getPdf } from './pdf.controller.js';
 import mongoose from 'mongoose';
 import { flattenObject } from '../utils/flattenObject.util.js';
 import { Pdftemplet } from '../pdftemplets/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
+import Joi from 'joi';
 
 const createResult = asyncHandler(async (req, res) => {
     const { score, time_taken, total_correct, date_completed, exam } = req.body;
-    let validParams = validatefields({
-        score,
-        time_taken,
-        total_correct,
-        date_completed,
-        exam,
-    });
-    if (validParams.parameterisNull) {
+   
+    //validating the result
+    if (!req.body || Object.keys(req.body).length === 0) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
-            validParams.parameterName + ' is null or undefined'
+            'Request body cannot be empty.'
+        );
+    }
+
+    const { error } = Joi.object({
+         time_taken: Joi.number().integer().min(1).max(360).messages({
+                'number.base': 'duration must be a number.',
+                'number.min': 'duration must be at least 1.',
+                'number.max': 'duration cannot exceed 360.',
+            }),
+        score: Joi.number()
+                .integer()
+                .min(1)
+                .max(5000)
+                .required()
+                .messages({
+                    'number.base': 'total_questions must be a number.',
+                    'number.min': 'total_questions must be at least 1.',
+                    'number.max': 'total_questions cannot exceed 5000.',
+                }),
+         total_correct: Joi.number()
+                .integer()
+                .min(1)
+                .max(500)
+                .required()
+                .messages({
+                    'number.base': 'total_correct must be a number.',
+                    'number.min': 'total_correct must be at least 1.',
+                    'number.max': 'total_correct cannot exceed 500.',
+                }),
+            date_completed:Joi.string().required().isoDate(),
+            exam:Joi.string()
+            .pattern(/^[a-zA-Z0-9]+$/) // Alphanumeric validation
+            .required()
+    }).options({ allowUnknown: false })
+        .validate(req.body);
+
+    if (error) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            error.details[0].message
         );
     }
 

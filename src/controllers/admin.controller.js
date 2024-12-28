@@ -104,7 +104,6 @@ const loginAdmin = asyncHandler(async (req, res) => {
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
     try {
-        console.log(req.user);
         let admin = await Admin.findById(req.user);
         admin=admin.toJSON();
         return res.status(200).json(new Apiresponse(admin, 200));
