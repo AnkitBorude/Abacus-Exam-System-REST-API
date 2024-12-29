@@ -47,19 +47,19 @@ const loginAdmin = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     const { error } = Joi.object({
         username: Joi.string().alphanum().min(3).max(30).required(),
-         password: Joi.string().min(8).max(128).required().messages({
-                'string.min': 'password must be at least 8 characters long.',
-                'string.max': 'password must not exceed 128 characters.',
-            })
-   })
-       .options({ allowUnknown: false })
-       .validate(req.body);
-   if (error) {
-       throw new Apierror(
-           HTTP_STATUS_CODES.BAD_REQUEST.code,
-           error.details[0].message
-       );
-   }
+        password: Joi.string().min(8).max(128).required().messages({
+            'string.min': 'password must be at least 8 characters long.',
+            'string.max': 'password must not exceed 128 characters.',
+        }),
+    })
+        .options({ allowUnknown: false })
+        .validate(req.body);
+    if (error) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            error.details[0].message
+        );
+    }
 
     let admin; //extracting the admin from the db
     try {
@@ -77,7 +77,10 @@ const loginAdmin = asyncHandler(async (req, res) => {
     if (!(await admin.comparePassword(password))) {
         if (admin.password != password) {
             //implemented temporary for old legacy passwords until all passwords are not reseted and rehashed
-            throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, 'Wrong Password');
+            throw new Apierror(
+                HTTP_STATUS_CODES.UNAUTHORIZED.code,
+                'Wrong Password'
+            );
         }
     }
     //generating access token
@@ -105,7 +108,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 const getCurrentAdmin = asyncHandler(async (req, res) => {
     try {
         let admin = await Admin.findById(req.user);
-        admin=admin.toJSON();
+        admin = admin.toJSON();
         return res.status(200).json(new Apiresponse(admin, 200));
     } catch (error) {
         throw new Apierror(441, error.message);

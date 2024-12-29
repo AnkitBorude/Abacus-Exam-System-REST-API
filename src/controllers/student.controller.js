@@ -34,16 +34,24 @@ const registerStudent = asyncHandler(async (req, res) => {
             password,
         });
         await student.save();
-        res.status(201).json(new Apiresponse('Student Registration Successfull', 201));
+        res.status(201).json(
+            new Apiresponse('Student Registration Successfull', 201)
+        );
     } catch (error) {
         if (
             error.code === 11000 &&
             error.keyPattern &&
             error.keyPattern.username
         ) {
-            throw new Apierror(HTTP_STATUS_CODES.CONFLICT.code, 'Username already Exists');
+            throw new Apierror(
+                HTTP_STATUS_CODES.CONFLICT.code,
+                'Username already Exists'
+            );
         } else {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                error.message
+            );
         }
     }
 });
@@ -51,11 +59,11 @@ const registerStudent = asyncHandler(async (req, res) => {
 const loginStudent = asyncHandler(async (req, res) => {
     const { username, password } = req.body;
     const { error } = Joi.object({
-          username: Joi.string().alphanum().min(3).max(30).required(),
-          password: Joi.string().min(8).max(128).required().messages({
-                 'string.min': 'password must be at least 8 characters long.',
-                 'string.max': 'password must not exceed 128 characters.',
-             }),
+        username: Joi.string().alphanum().min(3).max(30).required(),
+        password: Joi.string().min(8).max(128).required().messages({
+            'string.min': 'password must be at least 8 characters long.',
+            'string.max': 'password must not exceed 128 characters.',
+        }),
     })
         .options({ allowUnknown: false })
         .validate(req.body);
@@ -115,13 +123,14 @@ const loginStudent = asyncHandler(async (req, res) => {
 
 const getCurrentstudent = asyncHandler(async (req, res) => {
     try {
-        let student = await Student.findById(req.user).select("-deletedAt -is_deleted");
+        let student = await Student.findById(req.user).select(
+            '-deletedAt -is_deleted'
+        );
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
     } catch (error) {
         throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
-
 });
 
 /**
@@ -130,119 +139,122 @@ const getCurrentstudent = asyncHandler(async (req, res) => {
  * given query string name
  */
 const getStudents = asyncHandler(async (req, res) => {
-    if(req.role=="admin")
-    {
-    const { class: classQuery, level, name } = req.query;
+    if (req.role == 'admin') {
+        const { class: classQuery, level, name } = req.query;
 
-    const query = {};
-    if (classQuery) {
-        query.sclass = classQuery;
-    }
-    if (level) {
-        query.level = level;
-    }
-    if (name) {
-        query.fullname = { $regex: '^' + name, $options: 'i' };
-    } //regex to search the fullname starts with the query string name passed with
-    let students = null;
-    try {
-        students = await Student.find(query).select(
-            '-password -refreshToken -__v'
+        const query = {};
+        if (classQuery) {
+            query.sclass = classQuery;
+        }
+        if (level) {
+            query.level = level;
+        }
+        if (name) {
+            query.fullname = { $regex: '^' + name, $options: 'i' };
+        } //regex to search the fullname starts with the query string name passed with
+        let students = null;
+        try {
+            students = await Student.find(query).select(
+                '-password -refreshToken -__v'
+            );
+        } catch (error) {
+            throw new Apierror(489, error.message);
+        }
+        if (students.length == 0) {
+            throw new Apierror(490, 'No students found');
+        }
+
+        return res.status(200).json(
+            new Apiresponse(
+                students.map((s) => s.toJSON()),
+                200
+            )
         );
-    } catch (error) {
-        throw new Apierror(489, error.message);
+    } else {
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden');
     }
-    if (students.length == 0) {
-        throw new Apierror(490, 'No students found');
-    }
-
-    return res
-        .status(200)
-        .json(new Apiresponse(students.map((s) => s.toJSON()),200));
-}
-else
-{
-    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden")
-}
 });
 
 const deleteStudent = asyncHandler(async (req, res) => {
     //performing soft delete and hard delete of the student
-    if(req.role=="admin")
-    {
-    let studentId = req.params.studentId;
-    if (!mongoose.Types.ObjectId.isValid(studentId)) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Student Id'
+    if (req.role == 'admin') {
+        let studentId = req.params.studentId;
+        if (!mongoose.Types.ObjectId.isValid(studentId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+        studentId = new mongoose.Types.ObjectId(studentId);
+        let student = await Student.findById(studentId);
+        if (!student || student.is_deleted) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Student Not found'
+            );
+        }
+        const exists = await Result.findOne({ student: studentId })
+            .lean()
+            .select('_id');
+        if (exists) {
+            //soft delete
+            student.is_deleted = true;
+            student.deletedAt = new Date();
+            //making the soft deleted students username reusable
+            student.username = student.username + 'deletedAt' + Date.now();
+            await student.save();
+        } else {
+            //hard delete
+            await Student.deleteOne({ _id: student._id });
+        }
+        res.status(200).json(
+            new Apiresponse(`Student deleted Successfully`, 200)
         );
-    }
-    studentId = new mongoose.Types.ObjectId(studentId);
-    let student = await Student.findById(studentId);
-    if (!student || student.is_deleted) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.NOT_FOUND.code,
-            'Student Not found'
-        );
-    }
-    const exists = await Result.findOne({ student: studentId })
-        .lean()
-        .select('_id');
-    if (exists) {
-        //soft delete
-        student.is_deleted = true;
-        student.deletedAt = new Date();
-        //making the soft deleted students username reusable
-        student.username = student.username + 'deletedAt' + Date.now();
-        await student.save();
     } else {
-        //hard delete
-        await Student.deleteOne({ _id: student._id });
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden Access'
+        );
     }
-    res.status(200).json(new Apiresponse(`Student deleted Successfully`, 200));
-}else{
-    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden Access");
-}
 });
 
 const deleteStudentAllRecord = asyncHandler(async (req, res) => {
     //remove all the results;
     //remove the whole student
-    if(req.role=="admin")
-    {
+    if (req.role == 'admin') {
+        let studentId = req.params.studentId;
+        if (!mongoose.Types.ObjectId.isValid(studentId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+        studentId = new mongoose.Types.ObjectId(studentId);
+        let student = await Student.findById(studentId);
+        if (!student) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Student Not found'
+            );
+        }
 
-    let studentId = req.params.studentId;
-    if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        //delete all associated results
+        let deletedObj = await Result.deleteMany({ student: studentId });
+        //delete the student
+        await Student.deleteOne({ _id: student._id });
+
+        res.status(200).json(
+            new Apiresponse(
+                `Student and associated ${deletedObj.deletedCount} records deleted Successfully`,
+                200
+            )
+        );
+    } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Student Id'
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden Access'
         );
     }
-    studentId = new mongoose.Types.ObjectId(studentId);
-    let student = await Student.findById(studentId);
-    if (!student) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.NOT_FOUND.code,
-            'Student Not found'
-        );
-    }
-
-    //delete all associated results
-    let deletedObj = await Result.deleteMany({ student: studentId });
-    //delete the student
-    await Student.deleteOne({ _id: student._id });
-
-    res.status(200).json(
-        new Apiresponse(
-            `Student and associated ${deletedObj.deletedCount} records deleted Successfully`,
-            200
-        )
-    );
-}
-else
-{
-    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden Access");
-}
 });
 
 const updateStudent = asyncHandler(async (req, res) => {

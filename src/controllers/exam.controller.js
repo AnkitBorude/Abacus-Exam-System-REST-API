@@ -140,7 +140,9 @@ const getExams = asyncHandler(async (req, res) => {
         }
         transformedExams = exam;
     } else {
-        let student = await Student.findById(req.user);
+        let student = await Student.findById(
+            new mongoose.Types.ObjectId(req.user)
+        );
         let studentLevel = student.level;
         exam = await Exam.find({ level: studentLevel }).populate(
             'created_by',
@@ -260,30 +262,30 @@ const getResults = asyncHandler(async (req, res) => {
 
             {
                 $unwind: {
-                    path: "$student", // Unwinds the array into a single subdocument
+                    path: '$student', // Unwinds the array into a single subdocument
                     preserveNullAndEmptyArrays: true, // Optional: Keeps documents without matches
                 },
             },
             {
                 $addFields: {
                     result_id: '$_id',
-                    "student.student_id":'$student._id'
+                    'student.student_id': '$student._id',
                 },
             },
             {
                 $project: {
                     __v: 0,
                     _id: 0,
-                    createdAt:0,
-                    updatedAt:0,
-                    exam:0,
-                    "student.password":0,
-                    "student._id":0,
-                    "student.username":0,
-                    "student.refreshToken":0,
-                    "student.createdAt":0,
-                    "student.updatedAt":0,
-                    "student.__v":0
+                    createdAt: 0,
+                    updatedAt: 0,
+                    exam: 0,
+                    'student.password': 0,
+                    'student._id': 0,
+                    'student.username': 0,
+                    'student.refreshToken': 0,
+                    'student.createdAt': 0,
+                    'student.updatedAt': 0,
+                    'student.__v': 0,
                 },
             },
         ]);
@@ -305,7 +307,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id: '$_id'
+                    result_id: '$_id',
                 },
             },
             {
@@ -314,15 +316,18 @@ const getResults = asyncHandler(async (req, res) => {
                     exam: 0,
                     __v: 0,
                     _id: 0,
-                    createdAt:0,
-                    updatedAt:0
+                    createdAt: 0,
+                    updatedAt: 0,
                 },
             },
         ]);
     }
 
     if (results.length == 0) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Associated Result Found For this Exam');
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'No Associated Result Found For this Exam'
+        );
     }
 
     return res.status(200).json(new Apiresponse(results, 200));
@@ -371,7 +376,10 @@ const getStudents = asyncHandler(async (req, res) => {
         },
     ]);
     if (students.length == 0) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Student Found');
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'No Student Found'
+        );
     }
 
     return res.status(200).json(new Apiresponse(students, 200));

@@ -52,7 +52,7 @@ adminSchema.set('toJSON', {
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
-        rec.admin_id=rec._id;
+        rec.admin_id = rec._id;
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;

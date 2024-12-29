@@ -10,12 +10,10 @@ const authMiddleware = (req, res, next) => {
             'WWW-Authenticate',
             'Bearer realm="API", error="token_required", error_description="Token is required"'
         );
-        return res
-            .status(HTTP_STATUS_CODES.UNAUTHORIZED.code)
-            .json({
-                ...new Apierror(401, 'Token not found'),
-                message: 'Access token is missing',
-            });
+        return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({
+            ...new Apierror(401, 'Token not found'),
+            message: 'Access token is missing',
+        });
     }
     try {
         const decoded = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET); // Verify token
@@ -33,32 +31,26 @@ const authMiddleware = (req, res, next) => {
         );
         if (error.name == 'TokenExpiredError') {
             //if the token is expired
-            return res
-                .status(HTTP_STATUS_CODES.UNAUTHORIZED.code)
-                .json({
-                    ...new Apierror(
-                        HTTP_STATUS_CODES.UNAUTHORIZED.code,
-                        'Token is Expired'
-                    ),
-                    message: 'Token is Expired',
-                });
+            return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({
+                ...new Apierror(
+                    HTTP_STATUS_CODES.UNAUTHORIZED.code,
+                    'Token is Expired'
+                ),
+                message: 'Token is Expired',
+            });
         } else if (error.name == 'JsonWebTokenError') {
             //if the token is invalid
-            return res
-                .status(HTTP_STATUS_CODES.UNAUTHORIZED.code)
-                .json({
-                    ...new Apierror(
-                        HTTP_STATUS_CODES.UNAUTHORIZED.code,
-                        'Token is Invalid'
-                    ),
-                    message: 'Token is Invalid',
-                });
+            return res.status(HTTP_STATUS_CODES.UNAUTHORIZED.code).json({
+                ...new Apierror(
+                    HTTP_STATUS_CODES.UNAUTHORIZED.code,
+                    'Token is Invalid'
+                ),
+                message: 'Token is Invalid',
+            });
         } else {
-            return res
-                .status(500)
-                .json({
-                    message: 'Internal server error while verifying token',
-                });
+            return res.status(500).json({
+                message: 'Internal server error while verifying token',
+            });
         }
     }
 };
