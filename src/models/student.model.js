@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
 import { MIN_USERNAME_LENGTH } from '../constants.js';
+import { generatePublicId } from '../utils/generatePublicid.util.js';
 const studentSchema = new mongoose.Schema(
     {
         fullname: {
@@ -82,6 +83,7 @@ studentSchema.set('toJSON', {
 
 studentSchema.pre('save', async function (next) {
     try {
+        //encrypt the password
         if (!this.isModified('password')) {
             return next();
         }
@@ -93,6 +95,14 @@ studentSchema.pre('save', async function (next) {
     } catch (error) {
         return next(error);
     }
+});
+studentSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("student");
+        next();
+    }
+   return next();
 });
 
 studentSchema.methods.comparePassword = async function (password) {

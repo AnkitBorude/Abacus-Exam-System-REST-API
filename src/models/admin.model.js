@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
+import { generatePublicId } from '../utils/generatePublicid.util.js';
 
 const adminSchema = new mongoose.Schema(
     {
@@ -87,6 +88,14 @@ adminSchema.pre('save', async function (next) {
     }
 });
 
+adminSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("admin");
+        next();
+    }
+   return next();
+});
 adminSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };

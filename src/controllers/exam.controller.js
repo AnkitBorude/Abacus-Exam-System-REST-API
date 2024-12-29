@@ -404,7 +404,6 @@ const deleteResults = asyncHandler(async (req, res) => {
 
     //role based access
     if (req.role == 'admin') {
-        console.log('admin requested to delete exam ' + examId + 'Results ');
         if (exam.created_by.equals(userId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(

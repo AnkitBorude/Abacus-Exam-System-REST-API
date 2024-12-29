@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import { questionSchema } from './question.model.js';
 import { Result } from './result.model.js';
+import { generatePublicId } from '../utils/generatePublicid.util.js';
 const examSchema = new mongoose.Schema(
     {
         title: {
@@ -67,6 +68,15 @@ examSchema.set('toJSON', {
         delete rec.updatedAt;
         return rec;
     },
+});
+
+examSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("exam");
+        next();
+    }
+   return next();
 });
 
 examSchema.methods.isExamAttempted = async function (studentId) {

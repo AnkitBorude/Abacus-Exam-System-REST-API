@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generatePublicId } from '../utils/generatePublicid.util.js';
 const resultSchema = new mongoose.Schema(
     {
         score: {
@@ -37,4 +38,12 @@ const resultSchema = new mongoose.Schema(
     { timestamps: true }
 );
 
+resultSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("result");
+        next();
+    }
+   return next();
+});
 export const Result = mongoose.model('Result', resultSchema);
