@@ -24,6 +24,8 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500).json({
         error: 'Internal Server Error',
         message: err.message || 'An unexpected error occurred.',
+        timestamp:new Date(),
+        statusCode:400
     });
     return next;
 });
