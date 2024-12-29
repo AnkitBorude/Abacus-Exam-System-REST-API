@@ -40,6 +40,12 @@ const adminSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true,
+            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+        }
     },
     { timestamps: true }
 );

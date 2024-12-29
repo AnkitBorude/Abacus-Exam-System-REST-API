@@ -5,6 +5,8 @@ let keyPrefix={
     "result":"r",
     "admin":"a"
 }
+
+//generate randomstring with resource prefix of length 8
 export const generatePublicId=(resourceType)=>{
    
 

@@ -27,6 +27,12 @@ const resultSchema = new mongoose.Schema(
             ref: 'Exam',
             required: true,
         },
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true,
+            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+        },
     },
     { timestamps: true }
 );

@@ -48,6 +48,12 @@ const examSchema = new mongoose.Schema(
             required: true,
         },
         questions: [questionSchema],
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true,
+            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+        },
     },
     { timestamps: true }
 );
