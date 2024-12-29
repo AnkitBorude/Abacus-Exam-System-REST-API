@@ -54,8 +54,7 @@ const studentSchema = new mongoose.Schema(
         public_id:{
             type:String,
             trim:true,
-            unique:true,
-            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+            unique:true
         }
     },
     { timestamps: true }
@@ -69,7 +68,7 @@ studentSchema.set('toJSON', {
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
-        rec.student_id = rec._id;
+        rec.student_id = rec.public_id;
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;
@@ -77,6 +76,7 @@ studentSchema.set('toJSON', {
         delete rec.refreshToken;
         delete rec.password;
         delete rec.username;
+        delete rec.public_id;
         return rec;
     },
 });

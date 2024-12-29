@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import { questionSchema } from './question.model.js';
 import { Result } from './result.model.js';
-import { generatePublicId } from '../utils/generatePublicid.util.js';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 const examSchema = new mongoose.Schema(
     {
         title: {
@@ -52,8 +52,7 @@ const examSchema = new mongoose.Schema(
         public_id:{
             type:String,
             trim:true,
-            unique:true,
-            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+            unique:true
         },
     },
     { timestamps: true }

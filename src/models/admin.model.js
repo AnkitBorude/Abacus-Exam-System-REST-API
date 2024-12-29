@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
-import { generatePublicId } from '../utils/generatePublicid.util.js';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 
 const adminSchema = new mongoose.Schema(
     {
@@ -44,8 +44,7 @@ const adminSchema = new mongoose.Schema(
         public_id:{
             type:String,
             trim:true,
-            unique:true,
-            match: [/^[A-Za-z0-9]{8}$/, "Id must be length 8 alphnumeric string"],
+            unique:true
         }
     },
     { timestamps: true }
