@@ -63,7 +63,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
     let admin; //extracting the admin from the db
     try {
-        admin = await Admin.findOne({ username });
+        admin = await Admin.findOne({ username }).select("username password public_id is_deleted");
     } catch (error) {
         throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
@@ -85,7 +85,7 @@ const loginAdmin = asyncHandler(async (req, res) => {
     }
     //generating access token
     const jwtToken = await signAccessToken({
-        adminId: admin._id.toString(),
+        adminId: admin.public_id,
         role: 'admin',
         username: admin.username,
     });
@@ -107,7 +107,9 @@ const loginAdmin = asyncHandler(async (req, res) => {
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
     try {
-        let admin = await Admin.findById(req.user);
+        let admin = await Admin.findOne({public_id:req.user}).select(
+                   '-deletedAt -is_deleted'
+               );
         admin = admin.toJSON();
         return res.status(200).json(new Apiresponse(admin, 200));
     } catch (error) {
@@ -149,7 +151,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     try {
         username = await verifyRefreshToken(req.body.refreshToken);
     } catch (error) {
-        throw new Apierror(401, error.message);
+        throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, error.message);
     }
 
     const exists = await Admin.findOne({
@@ -157,7 +159,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
         is_deleted: false,
     })
         .lean()
-        .select('refreshToken _id username');
+        .select('refreshToken username public_id');
 
     if (!exists) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Admin Not Found');
@@ -170,7 +172,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     }
 
     const accessToken = await signAccessToken({
-        adminId: exists._id.toString(),
+        adminId: exists.public_id,
         role: 'admin',
         username: exists.username,
     });
