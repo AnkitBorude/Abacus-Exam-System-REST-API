@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-import { generatePublicId } from '../utils/generatePublicid.util.js';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 const resultSchema = new mongoose.Schema(
     {
         score: {

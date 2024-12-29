@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
 import { MIN_USERNAME_LENGTH } from '../constants.js';
-import { generatePublicId } from '../utils/generatePublicid.util.js';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 const studentSchema = new mongoose.Schema(
     {
         fullname: {
