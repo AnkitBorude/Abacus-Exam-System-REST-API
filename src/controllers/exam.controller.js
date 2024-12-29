@@ -305,14 +305,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id: '$_id',
-                    exam_name: { $arrayElemAt: ['$exam.title', 0] },
-                    exam_duration: { $arrayElemAt: ['$exam.duration', 0] },
-                    exam_level: { $arrayElemAt: ['$exam.level', 0] },
-                    exam_total_question: {
-                        $arrayElemAt: ['$exam.total_questions', 0],
-                    },
-                    exam_marks: { $arrayElemAt: ['$exam.total_marks', 0] },
+                    result_id: '$_id'
                 },
             },
             {
@@ -321,6 +314,8 @@ const getResults = asyncHandler(async (req, res) => {
                     exam: 0,
                     __v: 0,
                     _id: 0,
+                    createdAt:0,
+                    updatedAt:0
                 },
             },
         ]);
