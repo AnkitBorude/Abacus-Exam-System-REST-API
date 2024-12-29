@@ -10,7 +10,7 @@ let keyPrefix={
 export const generatePublicId=(resourceType)=>{
    
 
-    let random = new Random(MersenneTwister19937.seed(Date.now()));
+    let random = new Random(MersenneTwister19937.autoSeed());
     let randomString=random.string(7);
     return keyPrefix[resourceType]+randomString;
 //s1234240
