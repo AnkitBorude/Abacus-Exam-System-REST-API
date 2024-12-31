@@ -4,12 +4,12 @@ import Apiresponse from '../utils/apiresponse.util.js';
 import { Exam } from '../models/exam.model.js';
 import mcqGenerator from '../core/mcqGenerator.js';
 import { Student } from '../models/student.model.js';
-import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
+import { Admin } from '../models/admin.model.js';
+import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
 
 const createExam = asyncHandler(async (req, res) => {
-    console.log(req.role);
     if (req.role == 'admin') {
         if (req.validationError) {
             throw new Apierror(
@@ -42,6 +42,7 @@ const createExam = asyncHandler(async (req, res) => {
             total_marks_per_question
         );
 
+        let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
         const exam = new Exam({
             title,
             duration,
@@ -51,7 +52,7 @@ const createExam = asyncHandler(async (req, res) => {
             total_questions,
             is_active,
             isSingleAttempt,
-            created_by: req.user,
+            created_by: docId,
             questions: questions,
         });
 
@@ -61,8 +62,8 @@ const createExam = asyncHandler(async (req, res) => {
             .json(new Apiresponse('Exam Created Successfully'), 200);
     } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.UNAUTHORIZED.code,
-            'Unauthorized cannot create exam'
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot create exam'
         );
     }
 });
@@ -72,9 +73,10 @@ const getExams = asyncHandler(async (req, res) => {
     let transformedExams;
     let exam;
     if (req.role == 'admin') {
+        let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
         exam = await Exam.aggregate([
             {
-                $match: { created_by: new mongoose.Types.ObjectId(req.user) }, // Convert req.user to ObjectId
+                $match: { created_by: docId }, // Convert req.user to ObjectId
             },
             {
                 $lookup: {
@@ -116,7 +118,7 @@ const getExams = asyncHandler(async (req, res) => {
                     'exam.total_attended': '$total_attended',
                     'exam.highest_score': '$highest_score',
                     'exam.unique_students': { $size: '$students' },
-                    'exam.exam_id': '$_id',
+                    'exam.exam_id': '$exam.public_id',
                 },
             },
             {
@@ -140,9 +142,8 @@ const getExams = asyncHandler(async (req, res) => {
         }
         transformedExams = exam;
     } else {
-        let student = await Student.findById(
-            new mongoose.Types.ObjectId(req.user)
-        );
+        let student = await Student.findOne({public_id:req.user});
+
         let studentLevel = student.level;
         exam = await Exam.find({ level: studentLevel }).populate(
             'created_by',
@@ -174,7 +175,14 @@ const getExams = asyncHandler(async (req, res) => {
 
 const getQuestions = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    let exam = await Exam.findById(examId);
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+    let exam = await Exam.findOne({public_id:examId});
     let questions = exam.questions;
     let transformedQuestions = questions.map((q) => q.toJSON());
 
@@ -183,46 +191,81 @@ const getQuestions = asyncHandler(async (req, res) => {
 
 const activateExam = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    let exam = await Exam.findByIdAndUpdate(
-        examId,
+    if(req.role=="admin")
+    {
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+    let exam = await Exam.findOneAndUpdate(
+        {public_id:examId},
         { is_active: true },
         { new: true }
     );
     if (!exam) {
-        throw new Apierror(457, 'Exam not found');
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam not found');
     }
     return res.status(200).json(new Apiresponse('Exam Activated Successfully'));
+}else
+{
+    throw new Apierror(
+        HTTP_STATUS_CODES.FORBIDDEN.code,
+        'Forbidden cannot Activate exam'
+    );
+}
 });
 const deactivateExam = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    let exam = await Exam.findByIdAndUpdate(
-        examId,
+    if(req.role=="admin")
+    {
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+    let exam = await Exam.findOneAndUpdate(
+        {public_id:examId},
         { is_active: false },
         { new: true }
     );
     if (!exam) {
-        throw new Apierror(458, 'Exam not found');
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam not found');
     }
     return res
         .status(200)
         .json(new Apiresponse('Exam Deactivated Successfully'));
+}else
+{
+    throw new Apierror(
+        HTTP_STATUS_CODES.FORBIDDEN.code,
+        'Forbidden cannot Deactivate exam'
+    );
+}
 });
 
 const deleteExam = asyncHandler(async (req, res) => {
+    if(req.role=="admin")
+    {
     let examId = req.params.examId;
-    if (!mongoose.Types.ObjectId.isValid(examId)) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Exam Id'
-        );
-    }
-    examId = new mongoose.Types.ObjectId(examId);
-    let exam = await Exam.findById(examId);
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+ 
+    let exam = await Exam.findOne({public_id:examId});
     if (!exam || exam.is_deleted) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
     }
-
-    const exists = await Result.findOne({ exam: examId }).lean().select('_id');
+    let docId=await getDocumentIdfromPublicid(exam.public_id,Exam,"exam");
+    const exists = await Result.findOne({ exam: docId }).lean().select('_id');
     if (exists) {
         exam.is_deleted = true;
         exam.deletedAt = new Date();
@@ -233,23 +276,42 @@ const deleteExam = asyncHandler(async (req, res) => {
         await Exam.deleteOne({ _id: exam._id });
     }
     res.status(200).json(new Apiresponse('Exam deleted Successfully', 200));
+}else{
+    throw new Apierror(
+        HTTP_STATUS_CODES.FORBIDDEN.code,
+        'Forbidden cannot delete exam'
+    );
+}
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only
 //inflates the exam field
 const getResults = asyncHandler(async (req, res) => {
-    let studentId = req.user; //accessign the student id from token if student role
-    let examId = req.params.examId;
-    const inflate = req.query.inflate;
-    let results;
-    if (req.role == 'admin') {
-        studentId = req.params.studentId; //accessign the student id from params if admin role
-    }
 
-    if (inflate == 'student') {
-        results = await Result.aggregate([
+    /**
+     * Following Two Endpoints are handled by this controller
+     * 1) /:examId/results--> only for student and admin ->>extract student Id from token
+     */
+    const examId=req.params.examId;
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+
+        let result=[];
+        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
+    if(req.role=="admin")
+    {
+        //admin van view the exams that he is the only owner
+      
+        //student inflate
+
+        result = await Result.aggregate([
             {
-                $match: { exam: new mongoose.Types.ObjectId(examId) },
+                $match: { exam: examDocId},
             },
             {
                 $lookup: {
@@ -268,8 +330,8 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id: '$_id',
-                    'student.student_id': '$student._id',
+                    result_id: '$public_id',
+                    'student.student_id': '$student.public_id',
                 },
             },
             {
@@ -289,12 +351,16 @@ const getResults = asyncHandler(async (req, res) => {
                 },
             },
         ]);
-    } else {
-        results = await Result.aggregate([
+
+
+    }else if(req.role=="student")
+    {
+        let studentDocId=await getDocumentIdfromPublicid(req.user,Student,"student");
+        result = await Result.aggregate([
             {
                 $match: {
-                    student: new mongoose.Types.ObjectId(studentId),
-                    exam: new mongoose.Types.ObjectId(examId),
+                    student: studentDocId,
+                    exam: examDocId,
                 },
             },
             {
@@ -307,7 +373,7 @@ const getResults = asyncHandler(async (req, res) => {
             },
             {
                 $addFields: {
-                    result_id: '$_id',
+                    result_id: '$public_id',
                 },
             },
             {
@@ -323,24 +389,101 @@ const getResults = asyncHandler(async (req, res) => {
         ]);
     }
 
-    if (results.length == 0) {
+    if (result.length == 0) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
             'No Associated Result Found For this Exam'
         );
     }
-
-    return res.status(200).json(new Apiresponse(results, 200));
+    return res.status(200).json(new Apiresponse(result, 200));
 });
 
+const getResultsbyStudent=asyncHandler(async (req,res)=>{
+
+    if(req.role=="admin")
+    {
+    let studentId = req.params.studentId;
+    let examId = req.params.examId;
+    if(!isValidpublicId(studentId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+        if(!isValidpublicId(examId))
+            {
+                throw new Apierror(
+                    HTTP_STATUS_CODES.BAD_REQUEST.code,
+                    'Invalid Exam Id'
+                );
+            }
+        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
+        let studentDocId=await getDocumentIdfromPublicid(studentId,Student,"student");
+
+        let results = await Result.aggregate([
+            {
+                $match: {
+                    student: studentDocId,
+                    exam: examDocId,
+                },
+            },
+            {
+                $lookup: {
+                    from: 'exams',
+                    localField: 'exam',
+                    foreignField: '_id',
+                    as: 'exam',
+                },
+            },
+            {
+                $addFields: {
+                    result_id: '$public_id',
+                },
+            },
+            {
+                $project: {
+                    student: 0,
+                    exam: 0,
+                    __v: 0,
+                    _id: 0,
+                    createdAt: 0,
+                    updatedAt: 0,
+                },
+            },
+        ]);
+        if (results.length == 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'No Associated Result Found For this Exam'
+            );
+        }
+    
+        return res.status(200).json(new Apiresponse(results, 200));
+    }else
+    {
+        //throw unauthorized erro
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden cannot access the result");
+    }
+});
 //returning all the results of the exam from examid
 //inflates student
 const getStudents = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
+    if(req.role=="admin")
+    {
 
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
     let students = await Result.aggregate([
         {
-            $match: { exam: new mongoose.Types.ObjectId(examId) },
+            $match: { exam:examDocId },
         },
         {
             $lookup: {
@@ -363,7 +506,7 @@ const getStudents = asyncHandler(async (req, res) => {
         },
         {
             $project: {
-                student_id: '$documents.student._id',
+                student_id: '$documents.student.public_id',
                 fullname: '$documents.student.fullname',
                 email: '$documents.student.email',
                 level: '$documents.student.level',
@@ -381,22 +524,29 @@ const getStudents = asyncHandler(async (req, res) => {
             'No Student Found'
         );
     }
-
     return res.status(200).json(new Apiresponse(students, 200));
+}
+else
+{
+    throw new Apierror(
+        HTTP_STATUS_CODES.FORBIDDEN.code,
+        'Forbidden cannot access student attempted the exam'
+    );
+}
 });
 
 const deleteResults = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
 
-    if (!mongoose.Types.ObjectId.isValid(examId)) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Exam Id'
-        );
-    }
-    examId = new mongoose.Types.ObjectId(examId);
-    let userId = new mongoose.Types.ObjectId(req.user);
-    let exam = await Exam.findById(examId);
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+    let userId = req.user;
+    let exam = await Exam.findOne({public_id:examId});
     //can delete the results even if the exam is deleted
     if (!exam) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
@@ -404,7 +554,8 @@ const deleteResults = asyncHandler(async (req, res) => {
 
     //role based access
     if (req.role == 'admin') {
-        if (exam.created_by.equals(userId)) {
+        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
+        if (exam.created_by.equals(adminDocId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(
                 new Apiresponse(
@@ -414,15 +565,15 @@ const deleteResults = asyncHandler(async (req, res) => {
             );
         } else {
             throw new Apierror(
-                HTTP_STATUS_CODES.UNAUTHORIZED.code,
-                'Unauthorized cannot delete the results'
+                HTTP_STATUS_CODES.FORBIDDEN.code,
+                'Forbidden cannot delete the results'
             );
         }
     } else if (req.role == 'student') {
-        console.log('admin requested to delete exam ' + examId + 'Results ');
+        let studentDocId=await getDocumentIdfromPublicid(userId,Student,"student");
         let deletedObj = await Result.deleteMany({
             exam: exam._id,
-            student: userId,
+            student: studentDocId,
         });
         res.status(200).json(
             new Apiresponse(
@@ -432,8 +583,8 @@ const deleteResults = asyncHandler(async (req, res) => {
         );
     } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.NOT_ACCEPTABLE.code,
-            'Cannot delete'
+            HTTP_STATUS_CODES.UNAUTHORIZED.code,
+            'Unauthorized Cannot delete'
         );
     }
 });
@@ -455,16 +606,17 @@ const updateExam = asyncHandler(async (req, res) => {
             );
         }
 
-        if (!mongoose.Types.ObjectId.isValid(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-        examId = new mongoose.Types.ObjectId(examId);
-        let userId = new mongoose.Types.ObjectId(req.user);
+        if(!isValidpublicId(examId))
+            {
+                throw new Apierror(
+                    HTTP_STATUS_CODES.BAD_REQUEST.code,
+                    'Invalid Exam Id'
+                );
+            }
 
-        const exists = await Exam.findOne({ _id: examId })
+        let userId = req.user;
+
+        const exists = await Exam.findOne({public_id: examId })
             .lean()
             .select('_id created_by');
 
@@ -474,9 +626,9 @@ const updateExam = asyncHandler(async (req, res) => {
                 'Exam Not Found'
             );
         }
-
+        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
         //check whether the admin is editing the exam which is only created by him
-        if (!exists.created_by.equals(userId)) {
+        if (!exists.created_by.equals(adminDocId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.FORBIDDEN.code,
                 'Forbidden access to edit details of exam '
@@ -538,16 +690,16 @@ const generateQuestions = asyncHandler(async (req, res) => {
             );
         }
 
-        if (!mongoose.Types.ObjectId.isValid(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-        examId = new mongoose.Types.ObjectId(examId);
-        let userId = new mongoose.Types.ObjectId(req.user);
+        if(!isValidpublicId(examId))
+            {
+                throw new Apierror(
+                    HTTP_STATUS_CODES.BAD_REQUEST.code,
+                    'Invalid Exam Id'
+                );
+            }
+        let userId = req.user;
 
-        const exists = await Exam.findOne({ _id: examId })
+        const exists = await Exam.findOne({public_id: examId })
             .lean()
             .select('_id created_by');
 
@@ -557,9 +709,9 @@ const generateQuestions = asyncHandler(async (req, res) => {
                 'Exam Not Found'
             );
         }
-
+        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
         //check whether the admin is editing the exam which is only created by him
-        if (!exists.created_by.equals(userId)) {
+        if (!exists.created_by.equals(adminDocId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.FORBIDDEN.code,
                 'Forbidden access to edit details of exam '
@@ -633,4 +785,5 @@ export {
     deleteResults,
     updateExam,
     generateQuestions,
+    getResultsbyStudent
 };
