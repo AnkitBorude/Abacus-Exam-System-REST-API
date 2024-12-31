@@ -143,7 +143,6 @@ const getExams = asyncHandler(async (req, res) => {
         transformedExams = exam;
     } else {
         let student = await Student.findOne({public_id:req.user});
-
         let studentLevel = student.level;
         exam = await Exam.find({ level: studentLevel }).populate(
             'created_by',
