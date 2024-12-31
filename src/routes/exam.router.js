@@ -11,6 +11,7 @@ import {
     deleteResults,
     updateExam,
     generateQuestions,
+    getResultsbyStudent,
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 import { questionValidation } from '../middlewares/questionValidation.middleware.js';
@@ -26,7 +27,7 @@ examRouter.route('/:examId/results').get(authMiddleware, getResults);
 examRouter.route('/:examId/students').get(authMiddleware, getStudents);
 examRouter
     .route('/:examId/students/:studentId/results')
-    .get(authMiddleware, getResults);
+    .get(authMiddleware, getResultsbyStudent);
 examRouter.route('/:examId').delete(authMiddleware, deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware, examValidation, updateExam);

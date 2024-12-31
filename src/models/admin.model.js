@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 
 const adminSchema = new mongoose.Schema(
     {
@@ -40,6 +41,11 @@ const adminSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true
+        }
     },
     { timestamps: true }
 );
@@ -52,9 +58,10 @@ adminSchema.set('toJSON', {
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
-        rec.admin_id = rec._id;
+        rec.admin_id = rec.public_id;
         delete rec._id;
         delete rec.__v;
+        delete rec.public_id;
         delete rec.createdAt;
         delete rec.updatedAt;
         delete rec.refreshToken;
@@ -81,6 +88,14 @@ adminSchema.pre('save', async function (next) {
     }
 });
 
+adminSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("admin");
+        next();
+    }
+   return next();
+});
 adminSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);
 };

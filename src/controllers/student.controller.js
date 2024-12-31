@@ -9,9 +9,9 @@ import {
     verifyRefreshToken,
 } from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
-import mongoose from 'mongoose';
 import { Result } from '../models/result.model.js';
 import Joi from 'joi';
+import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
 
 const registerStudent = asyncHandler(async (req, res) => {
     if (req.validationError) {
@@ -76,7 +76,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     //extracting the student from the db
 
     let student = await Student.findOne({ username }).select(
-        '_id is_deleted password username refreshToken'
+        '_id is_deleted password username refreshToken public_id'
     );
     if (!student || student.is_deleted) {
         throw new Apierror(
@@ -95,7 +95,7 @@ const loginStudent = asyncHandler(async (req, res) => {
     }
     //adding Access jwt token
     const token = await signAccessToken({
-        studentId: student._id.toString(),
+        studentId: student.public_id,
         role: 'student',
         username: student.username,
     });
@@ -123,9 +123,13 @@ const loginStudent = asyncHandler(async (req, res) => {
 
 const getCurrentstudent = asyncHandler(async (req, res) => {
     try {
-        let student = await Student.findById(req.user).select(
+        let student = await Student.findOne({public_id:req.user}).select(
             '-deletedAt -is_deleted'
         );
+        if(!student || student.is_deleted)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+        }
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
     } catch (error) {
@@ -179,21 +183,22 @@ const deleteStudent = asyncHandler(async (req, res) => {
     //performing soft delete and hard delete of the student
     if (req.role == 'admin') {
         let studentId = req.params.studentId;
-        if (!mongoose.Types.ObjectId.isValid(studentId)) {
+        if(!isValidpublicId(studentId))
+        {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Student Id'
             );
         }
-        studentId = new mongoose.Types.ObjectId(studentId);
-        let student = await Student.findById(studentId);
+        let student = await Student.findOne({public_id:studentId});
         if (!student || student.is_deleted) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not found'
             );
         }
-        const exists = await Result.findOne({ student: studentId })
+        let docId=await getDocumentIdfromPublicid(studentId,Student,"student");
+        const exists = await Result.findOne({ student: docId })
             .lean()
             .select('_id');
         if (exists) {
@@ -205,7 +210,7 @@ const deleteStudent = asyncHandler(async (req, res) => {
             await student.save();
         } else {
             //hard delete
-            await Student.deleteOne({ _id: student._id });
+            await Student.deleteOne({public_id:studentId });
         }
         res.status(200).json(
             new Apiresponse(`Student deleted Successfully`, 200)
@@ -223,25 +228,26 @@ const deleteStudentAllRecord = asyncHandler(async (req, res) => {
     //remove the whole student
     if (req.role == 'admin') {
         let studentId = req.params.studentId;
-        if (!mongoose.Types.ObjectId.isValid(studentId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Student Id'
-            );
-        }
-        studentId = new mongoose.Types.ObjectId(studentId);
-        let student = await Student.findById(studentId);
+        if(!isValidpublicId(studentId))
+            {
+                throw new Apierror(
+                    HTTP_STATUS_CODES.BAD_REQUEST.code,
+                    'Invalid Student Id'
+                );
+            }
+       
+        let student = await Student.findOne({public_id:studentId});
         if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not found'
             );
         }
-
+        let docId=await getDocumentIdfromPublicid(studentId,Student,"student");
         //delete all associated results
-        let deletedObj = await Result.deleteMany({ student: studentId });
+        let deletedObj = await Result.deleteMany({ student: docId});
         //delete the student
-        await Student.deleteOne({ _id: student._id });
+        await Student.deleteOne({public_id:studentId });
 
         res.status(200).json(
             new Apiresponse(
@@ -273,24 +279,21 @@ const updateStudent = asyncHandler(async (req, res) => {
             'Request body cannot be empty.'
         );
     }
-    if (!mongoose.Types.ObjectId.isValid(studentId)) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Student Id'
-        );
-    }
-
-    studentId = new mongoose.Types.ObjectId(studentId);
+    if(!isValidpublicId(studentId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+   
+    
     //check the role
     if (req.role == 'student') {
         //1 check student exists
-        const exists = await Student.findOne({
-            _id: studentId,
-            is_deleted: false,
-        })
-            .lean()
-            .select('_id');
-        if (!exists) {
+
+        let student = await Student.findOne({public_id:studentId,is_deleted:false}).lean().select('public_id');
+        if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not Found'
@@ -299,7 +302,7 @@ const updateStudent = asyncHandler(async (req, res) => {
 
         //2 check whether the student is updating is own details or not
 
-        if (!exists._id.equals(new mongoose.Types.ObjectId(req.user))) {
+        if (!student.public_id==req.user) {
             throw new Apierror(
                 HTTP_STATUS_CODES.UNAUTHORIZED.code,
                 'Unauthorized access to edit details of other student'
@@ -325,7 +328,7 @@ const updateStudent = asyncHandler(async (req, res) => {
         }
 
         await Student.updateOne(
-            { _id: exists._id },
+            { public_id: student.public_id },
             { $set: { ...req.body } },
             { runValidators: true }
         );
@@ -337,10 +340,8 @@ const updateStudent = asyncHandler(async (req, res) => {
             )
         );
     } else if (req.role == 'admin') {
-        const exists = await Student.findOne({ _id: studentId })
-            .lean()
-            .select('_id');
-        if (!exists) {
+        let student = await Student.findOne({public_id:studentId,is_deleted:false}).lean().select('public_id');
+        if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not Found'
@@ -364,7 +365,7 @@ const updateStudent = asyncHandler(async (req, res) => {
         }
 
         await Student.updateOne(
-            { _id: exists._id },
+            { public_id: student.public_id },
             { $set: { ...req.body } },
             { runValidators: true }
         );
@@ -420,7 +421,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
         is_deleted: false,
     })
         .lean()
-        .select('refreshToken _id username');
+        .select('refreshToken public_id username');
 
     if (!exists) {
         throw new Apierror(
@@ -436,7 +437,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     }
 
     const accessToken = await signAccessToken({
-        studentId: exists._id.toString(),
+        studentId: exists.public_id,
         role: 'student',
         username: exists.username,
     });

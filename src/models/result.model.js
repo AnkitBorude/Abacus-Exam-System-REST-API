@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 const resultSchema = new mongoose.Schema(
     {
         score: {
@@ -27,8 +28,21 @@ const resultSchema = new mongoose.Schema(
             ref: 'Exam',
             required: true,
         },
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true
+        },
     },
     { timestamps: true }
 );
 
+resultSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("result");
+        next();
+    }
+   return next();
+});
 export const Result = mongoose.model('Result', resultSchema);

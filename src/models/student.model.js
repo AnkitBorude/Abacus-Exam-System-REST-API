@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
 import { MIN_USERNAME_LENGTH } from '../constants.js';
+import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
 const studentSchema = new mongoose.Schema(
     {
         fullname: {
@@ -50,6 +51,11 @@ const studentSchema = new mongoose.Schema(
             type: String,
             default: ' ',
         },
+        public_id:{
+            type:String,
+            trim:true,
+            unique:true
+        }
     },
     { timestamps: true }
 );
@@ -62,7 +68,7 @@ studentSchema.set('toJSON', {
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
-        rec.student_id = rec._id;
+        rec.student_id = rec.public_id;
         delete rec._id;
         delete rec.__v;
         delete rec.createdAt;
@@ -70,12 +76,14 @@ studentSchema.set('toJSON', {
         delete rec.refreshToken;
         delete rec.password;
         delete rec.username;
+        delete rec.public_id;
         return rec;
     },
 });
 
 studentSchema.pre('save', async function (next) {
     try {
+        //encrypt the password
         if (!this.isModified('password')) {
             return next();
         }
@@ -87,6 +95,14 @@ studentSchema.pre('save', async function (next) {
     } catch (error) {
         return next(error);
     }
+});
+studentSchema.pre("save",async function (next) {
+    if(this.isNew)
+    {
+        this.public_id=generatePublicId("student");
+        next();
+    }
+   return next();
 });
 
 studentSchema.methods.comparePassword = async function (password) {
