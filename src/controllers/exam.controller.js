@@ -340,6 +340,7 @@ const getResults = asyncHandler(async (req, res) => {
                     createdAt: 0,
                     updatedAt: 0,
                     exam: 0,
+                    public_id:0,
                     'student.password': 0,
                     'student._id': 0,
                     'student.username': 0,
@@ -347,6 +348,7 @@ const getResults = asyncHandler(async (req, res) => {
                     'student.createdAt': 0,
                     'student.updatedAt': 0,
                     'student.__v': 0,
+                    'student.public_id':0
                 },
             },
         ]);
@@ -381,6 +383,7 @@ const getResults = asyncHandler(async (req, res) => {
                     exam: 0,
                     __v: 0,
                     _id: 0,
+                    public_id:0,
                     createdAt: 0,
                     updatedAt: 0,
                 },
@@ -446,6 +449,7 @@ const getResultsbyStudent=asyncHandler(async (req,res)=>{
                     exam: 0,
                     __v: 0,
                     _id: 0,
+                    public_id:0,
                     createdAt: 0,
                     updatedAt: 0,
                 },

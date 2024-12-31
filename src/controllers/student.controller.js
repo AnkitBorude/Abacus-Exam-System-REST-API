@@ -126,6 +126,10 @@ const getCurrentstudent = asyncHandler(async (req, res) => {
         let student = await Student.findOne({public_id:req.user}).select(
             '-deletedAt -is_deleted'
         );
+        if(!student || student.is_deleted)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+        }
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
     } catch (error) {
