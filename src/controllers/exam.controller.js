@@ -8,6 +8,7 @@ import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import { Admin } from '../models/admin.model.js';
 import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
+import { getBooleanfromQueryParameter } from '../utils/query/booleanValue.util.js';
 
 const createExam = asyncHandler(async (req, res) => {
     if (req.role == 'admin') {
@@ -72,11 +73,39 @@ const createExam = asyncHandler(async (req, res) => {
 const getExams = asyncHandler(async (req, res) => {
     let transformedExams;
     let exam;
+
+    const {title,level,is_active,isSingleAttempt,is_deleted,type}=req.query;
+
+    const query={};
+
+    if(title)
+    {
+        query.title= { $regex: '^' + title, $options: 'i' };
+    }
+
+    if(level)
+    {
+        query.level=level;
+    }
+    if(is_active)
+    {
+        query.is_active= is_active==="true";
+    }
+    if(is_deleted)
+    {
+        query.is_deleted= getBooleanfromQueryParameter(is_deleted);
+    }
+    if(isSingleAttempt || type)
+    {
+        
+        query.isSingleAttempt= getBooleanfromQueryParameter(isSingleAttempt) ||
+        getBooleanfromQueryParameter(type);
+    }
     if (req.role == 'admin') {
         let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
         exam = await Exam.aggregate([
             {
-                $match: { created_by: docId }, // Convert req.user to ObjectId
+                $match: { created_by: docId,...query}, // Convert req.user to ObjectId
             },
             {
                 $lookup: {
@@ -138,7 +167,11 @@ const getExams = asyncHandler(async (req, res) => {
             },
         ]);
         if (exam.length == 0) {
-            throw new Apierror(455, 'No Exam Found for admin');
+            if(query)
+            {
+                return res.status(200).json(new Apiresponse([],200));
+            }
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Exam Found');
         }
         transformedExams = exam;
     } else {
