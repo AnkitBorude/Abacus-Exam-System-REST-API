@@ -11,7 +11,10 @@ import {
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import { Result } from '../models/result.model.js';
 import Joi from 'joi';
-import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
+import {
+    getDocumentIdfromPublicid,
+    isValidpublicId,
+} from '../utils/publicId/validid.util.js';
 
 const registerStudent = asyncHandler(async (req, res) => {
     if (req.validationError) {
@@ -123,12 +126,14 @@ const loginStudent = asyncHandler(async (req, res) => {
 
 const getCurrentstudent = asyncHandler(async (req, res) => {
     try {
-        let student = await Student.findOne({public_id:req.user}).select(
+        let student = await Student.findOne({ public_id: req.user }).select(
             '-deletedAt -is_deleted'
         );
-        if(!student || student.is_deleted)
-        {
-            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+        if (!student || student.is_deleted) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Student Not Found'
+            );
         }
         student = student.toJSON();
         return res.status(200).json(new Apiresponse(student, 200));
@@ -183,21 +188,24 @@ const deleteStudent = asyncHandler(async (req, res) => {
     //performing soft delete and hard delete of the student
     if (req.role == 'admin') {
         let studentId = req.params.studentId;
-        if(!isValidpublicId(studentId))
-        {
+        if (!isValidpublicId(studentId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Student Id'
             );
         }
-        let student = await Student.findOne({public_id:studentId});
+        let student = await Student.findOne({ public_id: studentId });
         if (!student || student.is_deleted) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not found'
             );
         }
-        let docId=await getDocumentIdfromPublicid(studentId,Student,"student");
+        let docId = await getDocumentIdfromPublicid(
+            studentId,
+            Student,
+            'student'
+        );
         const exists = await Result.findOne({ student: docId })
             .lean()
             .select('_id');
@@ -210,7 +218,7 @@ const deleteStudent = asyncHandler(async (req, res) => {
             await student.save();
         } else {
             //hard delete
-            await Student.deleteOne({public_id:studentId });
+            await Student.deleteOne({ public_id: studentId });
         }
         res.status(200).json(
             new Apiresponse(`Student deleted Successfully`, 200)
@@ -228,26 +236,29 @@ const deleteStudentAllRecord = asyncHandler(async (req, res) => {
     //remove the whole student
     if (req.role == 'admin') {
         let studentId = req.params.studentId;
-        if(!isValidpublicId(studentId))
-            {
-                throw new Apierror(
-                    HTTP_STATUS_CODES.BAD_REQUEST.code,
-                    'Invalid Student Id'
-                );
-            }
-       
-        let student = await Student.findOne({public_id:studentId});
+        if (!isValidpublicId(studentId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+
+        let student = await Student.findOne({ public_id: studentId });
         if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not found'
             );
         }
-        let docId=await getDocumentIdfromPublicid(studentId,Student,"student");
+        let docId = await getDocumentIdfromPublicid(
+            studentId,
+            Student,
+            'student'
+        );
         //delete all associated results
-        let deletedObj = await Result.deleteMany({ student: docId});
+        let deletedObj = await Result.deleteMany({ student: docId });
         //delete the student
-        await Student.deleteOne({public_id:studentId });
+        await Student.deleteOne({ public_id: studentId });
 
         res.status(200).json(
             new Apiresponse(
@@ -279,20 +290,23 @@ const updateStudent = asyncHandler(async (req, res) => {
             'Request body cannot be empty.'
         );
     }
-    if(!isValidpublicId(studentId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Student Id'
-            );
-        }
-   
-    
+    if (!isValidpublicId(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+
     //check the role
     if (req.role == 'student') {
         //1 check student exists
 
-        let student = await Student.findOne({public_id:studentId,is_deleted:false}).lean().select('public_id');
+        let student = await Student.findOne({
+            public_id: studentId,
+            is_deleted: false,
+        })
+            .lean()
+            .select('public_id');
         if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
@@ -302,7 +316,7 @@ const updateStudent = asyncHandler(async (req, res) => {
 
         //2 check whether the student is updating is own details or not
 
-        if (!student.public_id==req.user) {
+        if (!student.public_id == req.user) {
             throw new Apierror(
                 HTTP_STATUS_CODES.UNAUTHORIZED.code,
                 'Unauthorized access to edit details of other student'
@@ -340,7 +354,12 @@ const updateStudent = asyncHandler(async (req, res) => {
             )
         );
     } else if (req.role == 'admin') {
-        let student = await Student.findOne({public_id:studentId,is_deleted:false}).lean().select('public_id');
+        let student = await Student.findOne({
+            public_id: studentId,
+            is_deleted: false,
+        })
+            .lean()
+            .select('public_id');
         if (!student) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,

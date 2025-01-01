@@ -51,11 +51,11 @@ const studentSchema = new mongoose.Schema(
             type: String,
             default: ' ',
         },
-        public_id:{
-            type:String,
-            trim:true,
-            unique:true
-        }
+        public_id: {
+            type: String,
+            trim: true,
+            unique: true,
+        },
     },
     { timestamps: true }
 );
@@ -96,13 +96,12 @@ studentSchema.pre('save', async function (next) {
         return next(error);
     }
 });
-studentSchema.pre("save",async function (next) {
-    if(this.isNew)
-    {
-        this.public_id=generatePublicId("student");
+studentSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        this.public_id = generatePublicId('student');
         next();
     }
-   return next();
+    return next();
 });
 
 studentSchema.methods.comparePassword = async function (password) {

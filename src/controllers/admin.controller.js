@@ -63,7 +63,9 @@ const loginAdmin = asyncHandler(async (req, res) => {
 
     let admin; //extracting the admin from the db
     try {
-        admin = await Admin.findOne({ username }).select("username password public_id is_deleted");
+        admin = await Admin.findOne({ username }).select(
+            'username password public_id is_deleted'
+        );
     } catch (error) {
         throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
@@ -107,9 +109,9 @@ const loginAdmin = asyncHandler(async (req, res) => {
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
     try {
-        let admin = await Admin.findOne({public_id:req.user}).select(
-                   '-deletedAt -is_deleted'
-               );
+        let admin = await Admin.findOne({ public_id: req.user }).select(
+            '-deletedAt -is_deleted'
+        );
         admin = admin.toJSON();
         return res.status(200).json(new Apiresponse(admin, 200));
     } catch (error) {

@@ -13,7 +13,7 @@ import {
     generateQuestions,
     getResultsbyStudent,
     getPracticeexamnAnalytics,
-    getAssessmentexamAnalytics
+    getAssessmentexamAnalytics,
 } from '../controllers/exam.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 import { questionValidation } from '../middlewares/questionValidation.middleware.js';
@@ -33,8 +33,12 @@ examRouter
 examRouter.route('/:examId').delete(authMiddleware, deleteExam);
 examRouter.route('/:examId/results').delete(authMiddleware, deleteResults);
 examRouter.route('/:examId').patch(authMiddleware, examValidation, updateExam);
-examRouter.route('/practice/:examId/analytics').get(authMiddleware,getPracticeexamnAnalytics);
-examRouter.route('/assessment/:examId/analytics').get(authMiddleware,getAssessmentexamAnalytics);
+examRouter
+    .route('/practice/:examId/analytics')
+    .get(authMiddleware, getPracticeexamnAnalytics);
+examRouter
+    .route('/assessment/:examId/analytics')
+    .get(authMiddleware, getAssessmentexamAnalytics);
 examRouter
     .route('/:examId/questions')
     .patch(authMiddleware, questionValidation, generateQuestions);
