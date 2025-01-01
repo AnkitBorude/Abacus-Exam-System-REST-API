@@ -211,7 +211,7 @@ const getExams = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(transformedExams, 200));
 });
 
-const getPracticeexamnAlaytics=asyncHandler(async (req,res)=>{
+const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
     const examId = req.params.examId;
     if(!isValidpublicId(examId))
         {
@@ -384,7 +384,134 @@ const getPracticeexamnAlaytics=asyncHandler(async (req,res)=>{
 
 });
 
+const getAssessmentexamAnalytics=asyncHandler(async (req,res)=>{
+    const examId = req.params.examId;
+    if(!isValidpublicId(examId))
+        {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+    let exam=await Exam.findOne({public_id:examId}).select("-questions");
+    if(!exam)
+    {
+        
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Exam Not Found");
+    }
+    if(!exam.isSingleAttempt)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Given exam in the practice exam");
+        }
 
+    const totalStudents = await Student.countDocuments({ level: exam.level });
+
+    const analytics = await Result.aggregate([
+        // Match the specific exam
+        { $match: { exam: exam._id} },
+
+        // Lookup student details
+        {
+          $lookup: {
+            from: 'students', // Reference to the students collection
+            localField: 'student',
+            foreignField: '_id',
+            as: 'studentInfo',
+          },
+        },
+      
+        // Unwind student details
+        { $unwind: '$studentInfo' },
+      
+        // Add derived fields for score percentage
+        {
+          $addFields: {
+            scorePercentage: {
+              $multiply: [{ $divide: ['$score', exam.total_marks] }, 100],
+            },
+          },
+        },
+      
+        // Group all results for per-student and overall analytics
+        {
+          $group: {
+            _id: null, // Group everything together
+            students: {
+              $push: {
+                studentName: '$studentInfo.fullname',
+                studentId: '$studentInfo.public_id',
+                score: '$score',
+                duration: '$time_taken',
+                scorePercentage: '$scorePercentage',
+              },
+            },
+            minScore: { $min: '$score' },
+            maxScore: { $max: '$score' },
+            avgScore: { $avg: '$score' },
+            minDuration: { $min: '$time_taken' },
+            maxDuration: { $max: '$time_taken' },
+            avgDuration: { $avg: '$time_taken' },
+          },
+        },
+      {
+        $addFields:{
+            avgTimeUtilizationPercentage:{ $multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },
+            totalEligibleStudents:totalStudents,
+            totalStudentsAttempted: { $size: '$students' },
+        }
+      },
+        // Project the final structure
+        {
+          $project: {
+            _id: 0,
+            totalEligibleStudents:1,
+            totalStudentsAttempted:1,
+            avgTimeUtilizationPercentage:1,
+            overallScore: {
+              min: '$minScore',
+              max: '$maxScore',
+              avg: '$avgScore',
+            },
+            overallDuration: {
+              min: '$minDuration',
+              max: '$maxDuration',
+              avg: '$avgDuration',
+            },
+            avgScorePercentage: {
+              $avg: '$students.scorePercentage',
+            },
+            students: 1,
+            starStudent: {
+              $arrayElemAt: [
+                {
+                  $sortArray: {
+                    input: '$students',
+                    sortBy: {
+                      scorePercentage: -1,
+                      duration: 1, // Tie-breaker: lowest duration
+                    },
+                  },
+                },
+                0,
+              ],
+            },
+          },
+        },
+      ]);
+
+
+      return res.status(200).json(new Apiresponse(
+        {
+            exam: {
+                title: exam.title,
+                level: exam.level,
+                totalMarks: exam.total_marks,
+                duration:exam.duration
+              }
+            ,analytics: analytics[0] || {}, // Use an empty object if no results found
+          }
+        , 200));
+});
 const getQuestions = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
     if(!isValidpublicId(examId))
@@ -1002,5 +1129,6 @@ export {
     updateExam,
     generateQuestions,
     getResultsbyStudent,
-    getPracticeexamnAlaytics
+    getPracticeexamnAnalytics,
+    getAssessmentexamAnalytics
 };
