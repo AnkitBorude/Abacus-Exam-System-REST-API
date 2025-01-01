@@ -49,10 +49,10 @@ const examSchema = new mongoose.Schema(
             required: true,
         },
         questions: [questionSchema],
-        public_id:{
-            type:String,
-            trim:true,
-            unique:true
+        public_id: {
+            type: String,
+            trim: true,
+            unique: true,
         },
     },
     { timestamps: true }
@@ -70,13 +70,12 @@ examSchema.set('toJSON', {
     },
 });
 
-examSchema.pre("save",async function (next) {
-    if(this.isNew)
-    {
-        this.public_id=generatePublicId("exam");
+examSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        this.public_id = generatePublicId('exam');
         next();
     }
-   return next();
+    return next();
 });
 
 examSchema.methods.isExamAttempted = async function (studentId) {

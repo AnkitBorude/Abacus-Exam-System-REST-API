@@ -41,11 +41,11 @@ const adminSchema = new mongoose.Schema(
             type: Date,
             default: null,
         },
-        public_id:{
-            type:String,
-            trim:true,
-            unique:true
-        }
+        public_id: {
+            type: String,
+            trim: true,
+            unique: true,
+        },
     },
     { timestamps: true }
 );
@@ -88,13 +88,12 @@ adminSchema.pre('save', async function (next) {
     }
 });
 
-adminSchema.pre("save",async function (next) {
-    if(this.isNew)
-    {
-        this.public_id=generatePublicId("admin");
+adminSchema.pre('save', async function (next) {
+    if (this.isNew) {
+        this.public_id = generatePublicId('admin');
         next();
     }
-   return next();
+    return next();
 });
 adminSchema.methods.comparePassword = async function (password) {
     return await bcrypt.compare(password, this.password);

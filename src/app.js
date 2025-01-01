@@ -19,13 +19,21 @@ app.get('/api/v1/echo', (req, res) => {
     res.json({ echoed: true });
 });
 
+app.use((req, res, next) => {
+    res.status(404).json({
+        success: false,
+        message: `The requested resource ${req.method} ${req.originalUrl} was not found on this server.`,
+    });
+    return next;
+});
+
 app.use((err, req, res, next) => {
     // Handle all other errors
     res.status(err.status || 500).json({
         error: 'Internal Server Error',
         message: err.message || 'An unexpected error occurred.',
-        timestamp:new Date(),
-        statusCode:400
+        timestamp: new Date(),
+        statusCode: 400,
     });
     return next;
 });

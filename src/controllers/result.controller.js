@@ -8,7 +8,10 @@ import { Pdftemplet } from '../pdftemplets/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
 import { Exam } from '../models/exam.model.js';
-import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
+import {
+    getDocumentIdfromPublicid,
+    isValidpublicId,
+} from '../utils/publicId/validid.util.js';
 import { Student } from '../models/student.model.js';
 
 const createResult = asyncHandler(async (req, res) => {
@@ -44,7 +47,7 @@ const createResult = asyncHandler(async (req, res) => {
                 'number.max': 'total_correct cannot exceed 500.',
             }),
         date_completed: Joi.string().required().isoDate(),
-        exam:Joi.string(),
+        exam: Joi.string(),
     })
         .options({ allowUnknown: false })
         .validate(req.body);
@@ -56,16 +59,14 @@ const createResult = asyncHandler(async (req, res) => {
         );
     }
 
-    if(!isValidpublicId(exam))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
+    if (!isValidpublicId(exam)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
 
-
-    let dbexam = await Exam.findOne({public_id:exam}).select(
+    let dbexam = await Exam.findOne({ public_id: exam }).select(
         'duration _id total_marks total_questions is_deleted total_marks_per_question'
     );
 
@@ -102,14 +103,18 @@ const createResult = asyncHandler(async (req, res) => {
             `Invalid score marks per question are ${dbexam.total_marks_per_question}`
         );
     }
-    let examDocId=await getDocumentIdfromPublicid(exam,Exam,"exam");
-     let studentDocId=await getDocumentIdfromPublicid(req.user,Student,"student");
+    let examDocId = await getDocumentIdfromPublicid(exam, Exam, 'exam');
+    let studentDocId = await getDocumentIdfromPublicid(
+        req.user,
+        Student,
+        'student'
+    );
     const result = new Result({
         score,
         time_taken,
         total_correct,
         date_completed, //will store the date in UTC thus will make need to append +5:30 each time
-        exam:examDocId,
+        exam: examDocId,
         student: studentDocId,
     });
     await result.save();
@@ -119,16 +124,14 @@ const createResult = asyncHandler(async (req, res) => {
 });
 
 const getResult = asyncHandler(async (req, res) => {
-
-    let resultId=req.params.resultId;
-    if(!isValidpublicId(resultId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Result Id'
-            );
-        }
-    let result = await Result.findOne({public_id:resultId})
+    let resultId = req.params.resultId;
+    if (!isValidpublicId(resultId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Result Id'
+        );
+    }
+    let result = await Result.findOne({ public_id: resultId })
         .populate(
             'student exam',
             'fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question'
@@ -179,15 +182,14 @@ const getResult = asyncHandler(async (req, res) => {
 
 const deleteResult = asyncHandler(async (req, res) => {
     let resultId = req.params.resultId;
-    if(!isValidpublicId(resultId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Result Id'
-            );
-        }
+    if (!isValidpublicId(resultId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Result Id'
+        );
+    }
 
-    let result = await Result.findOne({public_id:resultId});
+    let result = await Result.findOne({ public_id: resultId });
     if (!result) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
