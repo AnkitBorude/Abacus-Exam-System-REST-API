@@ -240,9 +240,12 @@ const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
         { $unwind: '$studentInfo' }, // Deconstruct the joined student array
         {
           $addFields: {
-            scorePercentage: { $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] }, // Calculate percentage
-          },
-        },
+            scorePercentage: {
+                $round:[{ $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] },2] // Calculate percentage
+          }
+        }
+
+    },
         {
           $group: {
             _id: '$student', // Group by student ID
@@ -296,8 +299,13 @@ const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
           },
         },{
             $addFields:{
-                avgScorePercentage:{ $multiply: [{ $divide: ['$avgScore', exam.total_marks] }, 100] },
-                avgTimeUtilizationPercentage:{ $multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },
+                avgScorePercentage:
+                {$round:[
+                { $multiply: [{ $divide: ['$avgScore', exam.total_marks] }, 100] },2]},
+                
+                avgTimeUtilizationPercentage:
+                { $round:[
+                    {$multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },2]},
                 totalEligibleStudents:totalStudents,
                 totalStudentsAttempted: { $size: '$students' },
             }
@@ -344,7 +352,9 @@ const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
         { $unwind: '$studentInfo' },
         {
           $addFields: {
-            scorePercentage: { $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] },
+            scorePercentage: {
+                $round:[
+            { $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] },2]}
           },
         },
         {
@@ -427,7 +437,8 @@ const getAssessmentexamAnalytics=asyncHandler(async (req,res)=>{
         {
           $addFields: {
             scorePercentage: {
-              $multiply: [{ $divide: ['$score', exam.total_marks] }, 100],
+                $round:[{
+              $multiply: [{ $divide: ['$score', exam.total_marks] }, 100]},2]
             },
           },
         },
@@ -455,7 +466,9 @@ const getAssessmentexamAnalytics=asyncHandler(async (req,res)=>{
         },
       {
         $addFields:{
-            avgTimeUtilizationPercentage:{ $multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },
+            avgTimeUtilizationPercentage:
+            {$round:[
+            { $multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },2]},
             totalEligibleStudents:totalStudents,
             totalStudentsAttempted: { $size: '$students' },
         }
