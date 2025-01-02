@@ -518,10 +518,12 @@ const getStudentPracticeExamAnalytics=asyncHandler(async (req,res)=>{
         {
           $addFields: {
             scorePercentage: {
-              $multiply: [{ $divide: ['$score', '$examInfo.total_marks'] }, 100],
+                $round:[{
+              $multiply: [{ $divide: ['$score', '$examInfo.total_marks'] }, 100]},2]
             },
             timeUtilizationPercentage: {
-              $multiply: [{ $divide: ['$time_taken', '$examInfo.duration'] }, 100],
+                $round:[{
+              $multiply: [{ $divide: ['$time_taken', '$examInfo.duration'] }, 100]},2]
             },
           },
         },
