@@ -399,6 +399,7 @@ const updateStudent = asyncHandler(async (req, res) => {
 });
 
 const regenerateAccessToken = asyncHandler(async (req, res) => {
+
     //check whether the body is not empty
     //validate body has valid refreshToken using joi
     //access refresh token and decode token
@@ -469,6 +470,159 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
+const getStudentPracticeExamAnalytics=asyncHandler(async (req,res)=>{
+
+    let studentId=null;
+    if(req.role=="student")
+    {
+    studentId=req.user;
+    }else
+    {
+        //for admin access studentId from 
+        studentId = req.params.studentId;
+    }
+
+    if (!isValidpublicId(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+
+    let student=await Student.findOne({public_id:studentId}).select("-password -refreshToken -username -createdAt -updatedAt");
+   //deleted student analytics can be accessed only by the admin
+    if(!student || (req.role=="student" && student.is_deleted))
+    {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Student Not Found");
+    }
+    const analytics = await Result.aggregate([
+        // Match results for the specific student
+        { $match: { student: student._id} },
+        // Lookup exam details
+        {
+          $lookup: {
+            from: 'exams',
+            localField: 'exam',
+            foreignField: '_id',
+            as: 'examInfo',
+          },
+        },
+  
+        // Unwind exam details
+        { $unwind: '$examInfo' },
+  
+        // Filter to include only practice exams
+        { $match: { 'examInfo.isSingleAttempt': false } },
+  
+        // Add derived fields
+        {
+          $addFields: {
+            scorePercentage: {
+              $multiply: [{ $divide: ['$score', '$examInfo.total_marks'] }, 100],
+            },
+            timeUtilizationPercentage: {
+              $multiply: [{ $divide: ['$time_taken', '$examInfo.duration'] }, 100],
+            },
+          },
+        },
+  
+        // Group by exam to calculate per-exam analytics
+        {
+          $group: {
+            _id: '$exam',
+            title: { $first: '$examInfo.title' },
+            level: { $first: '$examInfo.level' },
+            exam_id:{$first:'$examInfo.public_id'},
+            total_marks:{$first:'$examInfo.total_marks'},
+            attempts: {
+              $push: {
+                score: '$score',
+                durationTaken: '$time_taken',
+                scorePercentage: '$scorePercentage',
+                date:'$date_completed',
+                timeUtilizationPercentage: '$timeUtilizationPercentage',
+              },
+            },
+            totalAttempts: { $sum: 1 },
+            minScore: { $min: '$score' },
+            maxScore: { $max: '$score' },
+            avgScore: { $avg: '$score' },
+            minDuration: { $min: '$time_taken' },
+            maxDuration: { $max: '$time_taken' },
+            avgDuration: { $avg: '$time_taken' },
+          },
+        },
+        // Group by student to calculate overall analytics
+        {
+          $group: {
+            _id: null,
+            exams: {
+              $push: {
+                examId: '$exam_id',
+                title: '$title',
+                level: '$level',
+                totalMarks: '$total_marks',
+                duration: '$duration',
+                totalAttempts: '$totalAttempts',
+                score: {
+                  min: '$minScore',
+                  max: '$maxScore',
+                  avg: '$avgScore',
+                },
+                time_taken: {
+                  min: '$minDuration',
+                  max: '$maxDuration',
+                  avg: '$avgDuration',
+                },
+                attempts: '$attempts',
+              },
+            },
+            totalPracticeExams: { $sum: 1 },
+            overallMinScore: { $min: '$minScore' },
+            overallMaxScore: { $max: '$maxScore' },
+            overallAvgScore: { $avg: '$avgScore' },
+            overallMinDuration: { $min: '$minDuration' },
+            overallMaxDuration: { $max: '$maxDuration' },
+            overallAvgDuration: { $avg: '$avgDuration' },
+          },
+        },
+  
+        // Project the final response structure
+        {
+          $project: {
+            _id: 0,
+            studentName: 1,
+            studentId: 1,
+            exams: 1,
+            totalPracticeExams: 1,
+            overallScore: {
+              min: '$overallMinScore',
+              max: '$overallMaxScore',
+              avg: '$overallAvgScore',
+            },
+            overallDuration: {
+              min: '$overallMinDuration',
+              max: '$overallMaxDuration',
+              avg: '$overallAvgDuration',
+            },
+          },
+        },
+      ]);
+      return res.status(200).json(new Apiresponse(
+        {
+        student: {
+            name: student.fullname,
+            level: student.level,
+            class: student.sclass,
+            email:student.email,
+            phone_no:student.phone_no,
+            deleted:student.is_deleted,
+            deletedTime:student.deletedAt
+          },
+            analytics: analytics[0] || {}, // Use an empty object if no results found
+    }
+        , 200));
+});
 export {
     updateStudent,
     registerStudent,
@@ -478,4 +632,5 @@ export {
     deleteStudent,
     deleteStudentAllRecord,
     regenerateAccessToken,
+    getStudentPracticeExamAnalytics
 };

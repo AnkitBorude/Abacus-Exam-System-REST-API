@@ -8,6 +8,7 @@ import {
     deleteStudentAllRecord,
     updateStudent,
     regenerateAccessToken,
+    getStudentPracticeExamAnalytics
 } from '../controllers/student.controller.js';
 import authMiddleware from '../middlewares/jwtauth.middleware.js';
 import { studentValidation } from '../middlewares/studentValidation.middleware.js';
@@ -25,4 +26,6 @@ studentRouter
     .route('/:studentId')
     .patch(authMiddleware, studentValidation, updateStudent);
 studentRouter.route('/token').post(regenerateAccessToken);
+studentRouter.route('/exam/practice/analytics').get(authMiddleware,getStudentPracticeExamAnalytics);
+studentRouter.route('/:studentId/exam/practice/analytics').get(authMiddleware,getStudentPracticeExamAnalytics);
 export { studentRouter };
