@@ -600,12 +600,12 @@ const getStudentPracticeExamAnalytics=asyncHandler(async (req,res)=>{
             overallScore: {
               min: '$overallMinScore',
               max: '$overallMaxScore',
-              avg: '$overallAvgScore',
+              avg: {$round:['$overallAvgScore',2]},
             },
             overallDuration: {
               min: '$overallMinDuration',
               max: '$overallMaxDuration',
-              avg: '$overallAvgDuration',
+              avg: {$round:['$overallAvgDuration',2]},
             },
           },
         },
@@ -755,12 +755,12 @@ const getStudentAssessmentExamAnalytics=asyncHandler(async (req,res)=>{
             overallScore: {
               min: '$overallMinScore',
               max: '$overallMaxScore',
-              avg: '$overallAvgScore',
+              avg: {$round:['$overallAvgScore',2]},
             },
             overallDuration: {
               min: '$overallMinDuration',
               max: '$overallMaxDuration',
-              avg: '$overallAvgDuration',
+              avg: {$round:['$overallAvgDuration',2]},
             },
             avgScorePercentage: 1,
             avgTimeUtilizationPercentage: 1,
