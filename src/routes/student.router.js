@@ -26,6 +26,7 @@ studentRouter
 studentRouter
     .route('/:studentId')
     .patch(authMiddleware, studentValidation, updateStudent);
+studentRouter.route("/").patch(authMiddleware,studentValidation,updateStudent);
 studentRouter.route('/token').post(regenerateAccessToken);
 studentRouter.route('/exam/practice/analytics').get(authMiddleware,getStudentPracticeExamAnalytics);
 studentRouter.route('/:studentId/exam/practice/analytics').get(authMiddleware,getStudentPracticeExamAnalytics);

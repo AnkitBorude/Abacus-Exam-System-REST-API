@@ -280,7 +280,15 @@ const deleteStudentAllRecord = asyncHandler(async (req, res) => {
 });
 
 const updateStudent = asyncHandler(async (req, res) => {
-    let studentId = req.params.studentId;
+    let studentId=null;
+    if(req.role=="student")
+    {
+    studentId=req.user;
+    }else
+    {
+        //for admin access studentId from 
+        studentId = req.params.studentId;
+    }
 
     if (req.validationError) {
         throw new Apierror(
@@ -323,7 +331,7 @@ const updateStudent = asyncHandler(async (req, res) => {
 
         if (!student.public_id == req.user) {
             throw new Apierror(
-                HTTP_STATUS_CODES.UNAUTHORIZED.code,
+                HTTP_STATUS_CODES.FORBIDDEN.code,
                 'Unauthorized access to edit details of other student'
             );
         }
@@ -438,7 +446,7 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     try {
         username = await verifyRefreshToken(req.body.refreshToken);
     } catch (error) {
-        throw new Apierror(401, error.message);
+        throw new Apierror(HTTP_STATUS_CODES.UNAUTHORIZED.code, error.message);
     }
 
     const exists = await Student.findOne({
