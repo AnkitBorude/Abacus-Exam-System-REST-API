@@ -125,6 +125,7 @@ const loginStudent = asyncHandler(async (req, res) => {
 });
 
 const getCurrentstudent = asyncHandler(async (req, res) => {
+    if(req.role=="student"){
     try {
         let student = await Student.findOne({ public_id: req.user }).select(
             '-deletedAt -is_deleted'
@@ -140,6 +141,10 @@ const getCurrentstudent = asyncHandler(async (req, res) => {
     } catch (error) {
         throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
     }
+  }else
+  {
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden Student Token Required");
+  }
 });
 
 /**
@@ -180,7 +185,7 @@ const getStudents = asyncHandler(async (req, res) => {
             )
         );
     } else {
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden');
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot access students');
     }
 });
 

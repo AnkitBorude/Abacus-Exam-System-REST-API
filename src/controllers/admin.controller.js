@@ -17,7 +17,7 @@ const registerAdmin = asyncHandler(async (req, res) => {
     let validParams = validatefields({ fullname, email, username, password });
     if (validParams.parameterisNull) {
         throw new Apierror(
-            401,
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
             validParams.parameterName + ' is null or undefined'
         );
     }
@@ -37,9 +37,9 @@ const registerAdmin = asyncHandler(async (req, res) => {
             error.keyPattern &&
             error.keyPattern.username
         ) {
-            throw new Apierror(402, 'Username already Exists');
+            throw new Apierror(HTTP_STATUS_CODES.CONFLICT.code, 'Username already Exists');
         } else {
-            throw new Apierror(402, error.message);
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
         }
     }
 });
