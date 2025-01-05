@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Admin } from '../models/admin.model.js';
-import { validatefields } from '../utils/validatereqfields.util.js';
 import {
     signAccessToken,
     signRefreshToken,
@@ -13,14 +12,16 @@ import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
 
 const registerAdmin = asyncHandler(async (req, res) => {
-    const { fullname, email, username, password } = req.body;
-    let validParams = validatefields({ fullname, email, username, password });
-    if (validParams.parameterisNull) {
+    if (req.validationError) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
-            validParams.parameterName + ' is null or undefined'
+            req.validationError
         );
     }
+
+    const { fullname, email, username, password } = req.body;
+   
+   
 
     try {
         const admin = await Admin.create({
