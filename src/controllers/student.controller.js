@@ -199,18 +199,14 @@ const deleteStudent = asyncHandler(async (req, res) => {
                 'Invalid Student Id'
             );
         }
-        let student = await Student.findOne({ public_id: studentId });
+        let student = await Student.findOne({ public_id: studentId }).select("public_id _id is_deleted deletedAt username");
         if (!student || student.is_deleted) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Student Not found'
             );
         }
-        let docId = await getDocumentIdfromPublicid(
-            studentId,
-            Student,
-            'student'
-        );
+        let docId = student._id;
         const exists = await Result.findOne({ student: docId })
             .lean()
             .select('_id');

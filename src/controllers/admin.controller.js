@@ -3,7 +3,6 @@ import asyncHandler from '../utils/asynchandler.util.js';
 import Apierror from '../utils/apierror.util.js';
 import Apiresponse from '../utils/apiresponse.util.js';
 import { Admin } from '../models/admin.model.js';
-import { validatefields } from '../utils/validatereqfields.util.js';
 import {
     signAccessToken,
     signRefreshToken,
@@ -11,16 +10,21 @@ import {
 } from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
+import { isValidpublicId } from '../utils/publicId/validid.util.js';
+import { Result } from '../models/result.model.js';
+import { Exam } from '../models/exam.model.js';
 
 const registerAdmin = asyncHandler(async (req, res) => {
-    const { fullname, email, username, password } = req.body;
-    let validParams = validatefields({ fullname, email, username, password });
-    if (validParams.parameterisNull) {
+    if (req.validationError) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
-            validParams.parameterName + ' is null or undefined'
+            req.validationError
         );
     }
+
+    const { fullname, email, username, password } = req.body;
+   
+   
 
     try {
         const admin = await Admin.create({
@@ -108,15 +112,16 @@ const loginAdmin = asyncHandler(async (req, res) => {
     );
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
-    try {
+ 
         let admin = await Admin.findOne({ public_id: req.user }).select(
-            '-deletedAt -is_deleted'
+            'is_deleted'
         );
+        if(admin.is_deleted)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Admin Not Found");
+        }
         admin = admin.toJSON();
         return res.status(200).json(new Apiresponse(admin, 200));
-    } catch (error) {
-        throw new Apierror(441, error.message);
-    }
 });
 
 const regenerateAccessToken = asyncHandler(async (req, res) => {
@@ -187,4 +192,130 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken };
+const updateAdmin=asyncHandler(async (req,res)=>{
+
+    if(req.role=="admin")
+    {
+        let adminId=req.user;
+        if (req.validationError) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                req.validationError
+            );
+        }
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Request body cannot be empty.'
+            );
+        }
+        if (!isValidpublicId(adminId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+        let admin = await Admin.findOne({
+            public_id: adminId,
+            is_deleted: false,
+        })
+            .lean()
+            .select('public_id');
+        if (!admin) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Admin Not Found'
+            );
+        }
+        const updatesTobeDone = Object.keys(req.body);
+        await Admin.updateOne(
+            { public_id: admin.public_id },
+            { $set: { ...req.body } },
+            { runValidators: true }
+        );
+
+        res.status(200).json(
+            new Apiresponse(
+                `Admin ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`,
+                200
+            )
+        );
+    }
+    else
+    {
+        //throw forbidden error here\
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot update admin details');
+    }
+});
+
+const deleteAdmin=asyncHandler(async (req,res)=>{
+
+    if(req.role=="admin")
+    {
+        let adminId=req.user;
+        if (!isValidpublicId(adminId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+
+        let admin = await Admin.findOne({
+            public_id: adminId,
+            is_deleted: false,
+        })
+            .select('_id public_id is_deleted deletedAt username');
+        if (!admin) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Admin Not Found'
+            );
+        }
+          
+            //now check whether the admin has creates any exam
+                //if the exam is created then find if there exists at lea
+
+            const examExists = await Exam.find({ created_by: admin._id }).lean().select('_id');
+            if(examExists.length===0)
+            {
+                 //no exam exists
+                //hard delete
+                console.log("No exam exists hard deleting admin");
+                await Admin.deleteOne({ public_id: adminId });
+                return res.status(200).json(
+                  new Apiresponse(`Admin deleted Permantely`, 200)
+              );
+            }
+                //there exists an exam
+                const examIds = examExists.map(exam => exam._id);
+                const resultCounts=await Result.countDocuments({ exam: { $in: examIds } });
+                if(resultCounts>0)
+                {
+                    console.log("There are associated "+resultCounts+"Thus soft deleting admin");
+                    //soft delete admin
+                    admin.is_deleted = true;
+                    admin.deletedAt = new Date();
+                    //making the soft deleted students username reusable
+                    admin.username = admin.username + 'deletedAt' + Date.now();
+                    await admin.save();
+                    res.status(200).json(
+                        new Apiresponse(`Admin deleted Successfully`, 200)
+                    );
+                }
+                else
+                {
+                    //then delete all exams and then admin
+                    console.log("No Students attempted the exam thus deleting created exams and admin");
+                    await Exam.deleteMany({created_by:admin._id});
+                    await Admin.deleteOne({ public_id: adminId });
+                    res.status(200).json(
+                        new Apiresponse(`Admin deleted Permantenly`, 200)
+                    );
+                }
+          
+    }else{
+
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot delete admin');
+    }
+});
+export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken,updateAdmin,deleteAdmin };
