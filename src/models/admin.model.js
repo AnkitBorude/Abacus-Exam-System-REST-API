@@ -2,6 +2,7 @@ import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 import config from 'config';
 import { generatePublicId } from '../utils/publicId/generatePublicid.util.js';
+import { MIN_USERNAME_LENGTH } from '../constants.js';
 
 const adminSchema = new mongoose.Schema(
     {
@@ -14,8 +15,7 @@ const adminSchema = new mongoose.Schema(
             type: String,
             required: true,
             trim: true,
-            minLength: 8,
-            maxLength: 16,
+            minLength: MIN_USERNAME_LENGTH,
             unique: true,
         },
         email: {
