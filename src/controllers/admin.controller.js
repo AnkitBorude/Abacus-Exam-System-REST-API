@@ -10,6 +10,7 @@ import {
 } from '../utils/jwttoken.util.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
+import { isValidpublicId } from '../utils/publicId/validid.util.js';
 
 const registerAdmin = asyncHandler(async (req, res) => {
     if (req.validationError) {
@@ -188,4 +189,63 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken };
+const updateAdmin=asyncHandler(async (req,res)=>{
+
+    if(req.role=="admin")
+    {
+        let adminId=req.user;
+        if (req.validationError) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                req.validationError
+            );
+        }
+        if (!req.body || Object.keys(req.body).length === 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Request body cannot be empty.'
+            );
+        }
+        if (!isValidpublicId(adminId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Student Id'
+            );
+        }
+        let admin = await Admin.findOne({
+            public_id: adminId,
+            is_deleted: false,
+        })
+            .lean()
+            .select('public_id');
+        if (!admin) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Admin Not Found'
+            );
+        }
+        const updatesTobeDone = Object.keys(req.body);
+        await Admin.updateOne(
+            { public_id: admin.public_id },
+            { $set: { ...req.body } },
+            { runValidators: true }
+        );
+
+        res.status(200).json(
+            new Apiresponse(
+                `Admin ${updatesTobeDone.join(' , ')} attributes has been updated Successfully`,
+                200
+            )
+        );
+    }
+    else
+    {
+        //throw forbidden error here\
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot update admin details');
+    }
+});
+
+const deleteAdmin=asyncHandler(async (req,res)=>{
+
+});
+export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken,updateAdmin,deleteAdmin };
