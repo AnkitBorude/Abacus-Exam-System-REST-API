@@ -9,6 +9,8 @@ import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import { Admin } from '../models/admin.model.js';
 import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
 import { getBooleanfromQueryParameter } from '../utils/query/booleanValue.util.js';
+import Joi from 'joi';
+import { examValidationschema } from '../middlewares/examValidation.middleware.js';
 
 const createExam = asyncHandler(async (req, res) => {
     if (req.role == 'admin') {
@@ -95,11 +97,30 @@ const getExams = asyncHandler(async (req, res) => {
     {
         query.is_deleted= getBooleanfromQueryParameter(is_deleted);
     }
+    
     if(isSingleAttempt || type)
     {
-        
+        //used to allow multiple values for isSingleAttempt
         query.isSingleAttempt= getBooleanfromQueryParameter(isSingleAttempt) ||
         getBooleanfromQueryParameter(type);
+    }
+   
+    let queryValidation=Joi.object(
+        {
+            title:examValidationschema.extract('title'),
+            level:examValidationschema.extract('level'),
+            is_active:examValidationschema.extract('is_active'),
+            isSingleAttempt:examValidationschema.extract('isSingleAttempt'),
+            type: Joi.string().valid('practice', 'assessment').insensitive(),
+            is_deleted:Joi.boolean().messages({
+                    'boolean.base': 'is_deleted must be a boolean value (true or false).',
+                })
+        }).unknown(false);
+        console.log(query);
+    const { error } =queryValidation.validate(query);
+    if (error) {
+        //attaching the error message to req object
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
     }
     if (req.role == 'admin') {
         let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
