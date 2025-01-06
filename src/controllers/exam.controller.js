@@ -7,8 +7,13 @@ import { Student } from '../models/student.model.js';
 import { Result } from '../models/result.model.js';
 import { HTTP_STATUS_CODES, updateFieldPolicy } from '../constants.js';
 import { Admin } from '../models/admin.model.js';
-import { getDocumentIdfromPublicid, isValidpublicId } from '../utils/publicId/validid.util.js';
+import {
+    getDocumentIdfromPublicid,
+    isValidpublicId,
+} from '../utils/publicId/validid.util.js';
 import { getBooleanfromQueryParameter } from '../utils/query/booleanValue.util.js';
+import Joi from 'joi';
+import { examValidationschema } from '../middlewares/examValidation.middleware.js';
 
 const createExam = asyncHandler(async (req, res) => {
     if (req.role == 'admin') {
@@ -43,7 +48,7 @@ const createExam = asyncHandler(async (req, res) => {
             total_marks_per_question
         );
 
-        let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
+        let docId = await getDocumentIdfromPublicid(req.user, Admin, 'admin');
         const exam = new Exam({
             title,
             duration,
@@ -74,38 +79,57 @@ const getExams = asyncHandler(async (req, res) => {
     let transformedExams;
     let exam;
 
-    const {title,level,is_active,isSingleAttempt,is_deleted,type}=req.query;
+    const { title, level, is_active, isSingleAttempt, is_deleted, type } =
+        req.query;
 
-    const query={};
+    const query = {};
 
-    if(title)
-    {
-        query.title= { $regex: '^' + title, $options: 'i' };
+    if (title) {
+        query.title = { $regex: '^' + title, $options: 'i' };
     }
 
-    if(level)
-    {
-        query.level=level;
+    if (level) {
+        query.level = level;
     }
-    if(is_active)
-    {
-        query.is_active= is_active==="true";
+    if (is_active) {
+        query.is_active = is_active === 'true';
     }
-    if(is_deleted)
-    {
-        query.is_deleted= getBooleanfromQueryParameter(is_deleted);
+    if (is_deleted) {
+        query.is_deleted = getBooleanfromQueryParameter(is_deleted);
     }
-    if(isSingleAttempt || type)
-    {
-        
-        query.isSingleAttempt= getBooleanfromQueryParameter(isSingleAttempt) ||
-        getBooleanfromQueryParameter(type);
+
+    if (isSingleAttempt || type) {
+        //used to allow multiple values for isSingleAttempt
+        query.isSingleAttempt =
+            getBooleanfromQueryParameter(isSingleAttempt) ||
+            getBooleanfromQueryParameter(type);
+    }
+
+    let queryValidation = Joi.object({
+        title: examValidationschema.extract('title'),
+        level: examValidationschema.extract('level'),
+        is_active: examValidationschema.extract('is_active'),
+        isSingleAttempt: examValidationschema.extract('isSingleAttempt'),
+        type: Joi.string().valid('practice', 'assessment').insensitive(),
+        is_deleted: Joi.boolean().messages({
+            'boolean.base':
+                'is_deleted must be a boolean value (true or false).',
+        }),
+    }).unknown(false);
+    console.log(query);
+    const { error } = queryValidation.validate(query);
+    if (error) {
+        //attaching the error message to req object
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            error.details[0].message
+        );
     }
     if (req.role == 'admin') {
-        let docId=await getDocumentIdfromPublicid(req.user,Admin,"admin");
+        let docId = await getDocumentIdfromPublicid(req.user, Admin, 'admin');
         exam = await Exam.aggregate([
             {
-                $match: { created_by: docId,...query}, // Convert req.user to ObjectId
+                $match: { created_by: docId, ...query }, // Convert req.user to ObjectId
             },
             {
                 $lookup: {
@@ -167,26 +191,27 @@ const getExams = asyncHandler(async (req, res) => {
             },
         ]);
         if (exam.length == 0) {
-            if(query)
-            {
-                return res.status(200).json(new Apiresponse([],200));
+            if (query) {
+                return res.status(200).json(new Apiresponse([], 200));
             }
-            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No Exam Found');
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'No Exam Found'
+            );
         }
         transformedExams = exam;
     } else {
-        let student = await Student.findOne({public_id:req.user});
+        let student = await Student.findOne({ public_id: req.user });
         let studentLevel = student.level;
         delete query.is_deleted;
         delete query.level;
-        exam = await Exam.find({ level: studentLevel , ...query}).populate(
+        exam = await Exam.find({ level: studentLevel, ...query }).populate(
             'created_by',
             'fullname'
         );
         if (exam.length == 0) {
-            if(query)
-            {
-                return res.status(200).json(new Apiresponse([],200));
+            if (query) {
+                return res.status(200).json(new Apiresponse([], 200));
             }
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
@@ -211,55 +236,60 @@ const getExams = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(transformedExams, 200));
 });
 
-const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
+const getPracticeexamnAnalytics = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(!isValidpublicId(examId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-    let exam=await Exam.findOne({public_id:examId}).select("-questions");
-    if(!exam || exam.isSingleAttempt)
-    {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Exam Not Found");
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    let exam = await Exam.findOne({ public_id: examId }).select('-questions');
+    if (!exam || exam.isSingleAttempt) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not Found');
     }
 
     const totalStudents = await Student.countDocuments({ level: exam.level });
     const analytics = await Result.aggregate([
         { $match: { exam: exam._id } }, // Filter by exam ID
         {
-          $lookup: {
-            from: 'students', // Join with the 'students' collection
-            localField: 'student',
-            foreignField: '_id',
-            as: 'studentInfo',
-          },
+            $lookup: {
+                from: 'students', // Join with the 'students' collection
+                localField: 'student',
+                foreignField: '_id',
+                as: 'studentInfo',
+            },
         },
         { $unwind: '$studentInfo' }, // Deconstruct the joined student array
         {
-          $addFields: {
-            scorePercentage: {
-                $round:[{ $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] },2] // Calculate percentage
-          }
-        }
-
-    },
+            $addFields: {
+                scorePercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$score', exam.total_marks] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ], // Calculate percentage
+                },
+            },
+        },
         {
-          $group: {
-            _id: '$student', // Group by student ID
-            studentName: { $first: '$studentInfo.fullname' },
-            student_id: { $first: '$studentInfo.public_id' },
-            totalAttempts: { $sum: 1 },
-            minScore: { $min: '$score' },
-            maxScore: { $max: '$score' },
-            avgScore: { $avg: '$score' },
-            minDuration: { $min: '$time_taken' },
-            maxDuration: { $max: '$time_taken' },
-            avgDuration: { $avg: '$time_taken' },
-            maxPercentage: { $max: '$scorePercentage' },
-          },
+            $group: {
+                _id: '$student', // Group by student ID
+                studentName: { $first: '$studentInfo.fullname' },
+                student_id: { $first: '$studentInfo.public_id' },
+                totalAttempts: { $sum: 1 },
+                minScore: { $min: '$score' },
+                maxScore: { $max: '$score' },
+                avgScore: { $avg: '$score' },
+                minDuration: { $min: '$time_taken' },
+                maxDuration: { $max: '$time_taken' },
+                avgDuration: { $avg: '$time_taken' },
+                maxPercentage: { $max: '$scorePercentage' },
+            },
         },
         {
             $project: {
@@ -269,270 +299,311 @@ const getPracticeexamnAnalytics=asyncHandler(async (req,res)=>{
                 totalAttempts: 1,
                 maxPercentage: 1,
                 score: {
-                  min: '$minScore',
-                  max: '$maxScore',
-                  avg: '$avgScore',
+                    min: '$minScore',
+                    max: '$maxScore',
+                    avg: '$avgScore',
                 },
                 duration: {
-                  min: '$minDuration',
-                  max: '$maxDuration',
-                  avg: '$avgDuration',
+                    min: '$minDuration',
+                    max: '$maxDuration',
+                    avg: '$avgDuration',
                 },
-               
-              },
+            },
         },
         {
-          $group: {
-            _id: null, // Aggregate overall stats
-            students: { $push: '$$ROOT' }, // Collect per-student analytics
-            minDuration: { $min: '$duration.min' },
-            maxDuration: { $max: '$duration.max' },
-            avgDuration: { $avg: '$duration.avg' },
+            $group: {
+                _id: null, // Aggregate overall stats
+                students: { $push: '$$ROOT' }, // Collect per-student analytics
+                minDuration: { $min: '$duration.min' },
+                maxDuration: { $max: '$duration.max' },
+                avgDuration: { $avg: '$duration.avg' },
 
-            minAttempts: { $min: '$totalAttempts' },
-            maxAttempts: { $max: '$totalAttempts' },
-            avgAttempts: { $avg: '$totalAttempts' },
+                minAttempts: { $min: '$totalAttempts' },
+                maxAttempts: { $max: '$totalAttempts' },
+                avgAttempts: { $avg: '$totalAttempts' },
 
-            minScore:{$min:'$score.min'},
-            maxScore:{$max:'$score.max'},
-            avgScore:{$max:'$score.avg'}
-          },
-        },{
-            $addFields:{
-                avgScorePercentage:
-                {$round:[
-                { $multiply: [{ $divide: ['$avgScore', exam.total_marks] }, 100] },2]},
-                
-                avgTimeUtilizationPercentage:
-                { $round:[
-                    {$multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },2]},
-                totalEligibleStudents:totalStudents,
+                minScore: { $min: '$score.min' },
+                maxScore: { $max: '$score.max' },
+                avgScore: { $max: '$score.avg' },
+            },
+        },
+        {
+            $addFields: {
+                avgScorePercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$avgScore', exam.total_marks] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ],
+                },
+
+                avgTimeUtilizationPercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$avgDuration', exam.duration] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ],
+                },
+                totalEligibleStudents: totalStudents,
                 totalStudentsAttempted: { $size: '$students' },
-            }
+            },
         },
         {
-          $project: {
-            _id: 0,
-            
-            avgScorePercentage:1,
-            totalEligibleStudents:1,
-            totalStudentsAttempted:1,
-            avgTimeUtilizationPercentage:1,
-            overallScore:{
-                min:"$minScore",
-                max:"$maxScore",
-                avg:"$avgScore"
+            $project: {
+                _id: 0,
+
+                avgScorePercentage: 1,
+                totalEligibleStudents: 1,
+                totalStudentsAttempted: 1,
+                avgTimeUtilizationPercentage: 1,
+                overallScore: {
+                    min: '$minScore',
+                    max: '$maxScore',
+                    avg: '$avgScore',
+                },
+                overallDuration: {
+                    min: '$minDuration',
+                    max: '$maxDuration',
+                    avg: '$avgDuration',
+                },
+                overallAttempts: {
+                    min: '$minAttempts',
+                    max: '$maxAttempts',
+                    avg: '$avgAttempts',
+                },
+                students: 1,
             },
-            overallDuration:{
-                min:"$minDuration",
-                max:"$maxDuration",
-                avg:"$avgDuration"
-            },
-            overallAttempts:{
-                min:"$minAttempts",
-                max:"$maxAttempts",
-                avg:"$avgAttempts"
-            },
-            students: 1,
-          },
         },
-      ]);
-  
-      // Determine the student with the lowest time and highest percentage
-      const lowestTimeHighestPercentageStudent = await Result.aggregate([
-        { $match: {exam:exam._id} },
+    ]);
+
+    // Determine the student with the lowest time and highest percentage
+    const lowestTimeHighestPercentageStudent = await Result.aggregate([
+        { $match: { exam: exam._id } },
         {
-          $lookup: {
-            from: 'students',
-            localField: 'student',
-            foreignField: '_id',
-            as: 'studentInfo',
-          },
+            $lookup: {
+                from: 'students',
+                localField: 'student',
+                foreignField: '_id',
+                as: 'studentInfo',
+            },
         },
         { $unwind: '$studentInfo' },
         {
-          $addFields: {
-            scorePercentage: {
-                $round:[
-            { $multiply: [{ $divide: ['$score', exam.total_marks] }, 100] },2]}
-          },
+            $addFields: {
+                scorePercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$score', exam.total_marks] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ],
+                },
+            },
         },
         {
-          $sort: { time_taken: 1, scorePercentage: -1 }, // Sort by lowest time, then highest percentage
+            $sort: { time_taken: 1, scorePercentage: -1 }, // Sort by lowest time, then highest percentage
         },
         { $limit: 1 }, // Take the top result
         {
-          $project: {
-            studentName: '$studentInfo.fullname',
-            student_id: '$studentInfo.public_id',
-            timeTaken: '$time_taken',
-            _id:0,
-            scorePercentage: 1,
-          },
+            $project: {
+                studentName: '$studentInfo.fullname',
+                student_id: '$studentInfo.public_id',
+                timeTaken: '$time_taken',
+                _id: 0,
+                scorePercentage: 1,
+            },
         },
-      ]);
+    ]);
 
-      if (analytics.length == 0) {
+    if (analytics.length == 0) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
             'No Associated Result Found For this Exam'
         );
     }
-    return res.status(200).json(new Apiresponse(
-        {
-            
-            exam: {
-                title: exam.title,
-                level: exam.level,
-                totalMarks: exam.total_marks,
-                duration:exam.duration
-              }
-            ,analytics: analytics[0] || {}, // Use an empty object if no results found
-            starstudent: lowestTimeHighestPercentageStudent[0] || null, // Handle no results case
-          }
-        , 200));
-
+    return res.status(200).json(
+        new Apiresponse(
+            {
+                exam: {
+                    title: exam.title,
+                    level: exam.level,
+                    totalMarks: exam.total_marks,
+                    duration: exam.duration,
+                },
+                analytics: analytics[0] || {}, // Use an empty object if no results found
+                starstudent: lowestTimeHighestPercentageStudent[0] || null, // Handle no results case
+            },
+            200
+        )
+    );
 });
 
-const getAssessmentexamAnalytics=asyncHandler(async (req,res)=>{
+const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(!isValidpublicId(examId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-    let exam=await Exam.findOne({public_id:examId}).select("-questions");
-    if(!exam)
-    {
-        
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Exam Not Found");
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
     }
-    if(!exam.isSingleAttempt)
-        {
-            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Given exam in the practice exam");
-        }
+    let exam = await Exam.findOne({ public_id: examId }).select('-questions');
+    if (!exam) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not Found');
+    }
+    if (!exam.isSingleAttempt) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.NOT_FOUND.code,
+            'Given exam in the practice exam'
+        );
+    }
 
     const totalStudents = await Student.countDocuments({ level: exam.level });
 
     const analytics = await Result.aggregate([
         // Match the specific exam
-        { $match: { exam: exam._id} },
+        { $match: { exam: exam._id } },
 
         // Lookup student details
         {
-          $lookup: {
-            from: 'students', // Reference to the students collection
-            localField: 'student',
-            foreignField: '_id',
-            as: 'studentInfo',
-          },
+            $lookup: {
+                from: 'students', // Reference to the students collection
+                localField: 'student',
+                foreignField: '_id',
+                as: 'studentInfo',
+            },
         },
-      
+
         // Unwind student details
         { $unwind: '$studentInfo' },
-      
+
         // Add derived fields for score percentage
         {
-          $addFields: {
-            scorePercentage: {
-                $round:[{
-              $multiply: [{ $divide: ['$score', exam.total_marks] }, 100]},2]
+            $addFields: {
+                scorePercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$score', exam.total_marks] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ],
+                },
             },
-          },
         },
-      
+
         // Group all results for per-student and overall analytics
         {
-          $group: {
-            _id: null, // Group everything together
-            students: {
-              $push: {
-                studentName: '$studentInfo.fullname',
-                studentId: '$studentInfo.public_id',
-                score: '$score',
-                duration: '$time_taken',
-                scorePercentage: '$scorePercentage',
-              },
+            $group: {
+                _id: null, // Group everything together
+                students: {
+                    $push: {
+                        studentName: '$studentInfo.fullname',
+                        studentId: '$studentInfo.public_id',
+                        score: '$score',
+                        duration: '$time_taken',
+                        scorePercentage: '$scorePercentage',
+                    },
+                },
+                minScore: { $min: '$score' },
+                maxScore: { $max: '$score' },
+                avgScore: { $avg: '$score' },
+                minDuration: { $min: '$time_taken' },
+                maxDuration: { $max: '$time_taken' },
+                avgDuration: { $avg: '$time_taken' },
             },
-            minScore: { $min: '$score' },
-            maxScore: { $max: '$score' },
-            avgScore: { $avg: '$score' },
-            minDuration: { $min: '$time_taken' },
-            maxDuration: { $max: '$time_taken' },
-            avgDuration: { $avg: '$time_taken' },
-          },
         },
-      {
-        $addFields:{
-            avgTimeUtilizationPercentage:
-            {$round:[
-            { $multiply: [{ $divide: ['$avgDuration', exam.duration] }, 100] },2]},
-            totalEligibleStudents:totalStudents,
-            totalStudentsAttempted: { $size: '$students' },
-        }
-      },
+        {
+            $addFields: {
+                avgTimeUtilizationPercentage: {
+                    $round: [
+                        {
+                            $multiply: [
+                                { $divide: ['$avgDuration', exam.duration] },
+                                100,
+                            ],
+                        },
+                        2,
+                    ],
+                },
+                totalEligibleStudents: totalStudents,
+                totalStudentsAttempted: { $size: '$students' },
+            },
+        },
         // Project the final structure
         {
-          $project: {
-            _id: 0,
-            totalEligibleStudents:1,
-            totalStudentsAttempted:1,
-            avgTimeUtilizationPercentage:1,
-            overallScore: {
-              min: '$minScore',
-              max: '$maxScore',
-              avg: '$avgScore',
-            },
-            overallDuration: {
-              min: '$minDuration',
-              max: '$maxDuration',
-              avg: '$avgDuration',
-            },
-            avgScorePercentage: {
-              $avg: '$students.scorePercentage',
-            },
-            students: 1,
-            starStudent: {
-              $arrayElemAt: [
-                {
-                  $sortArray: {
-                    input: '$students',
-                    sortBy: {
-                      scorePercentage: -1,
-                      duration: 1, // Tie-breaker: lowest duration
-                    },
-                  },
+            $project: {
+                _id: 0,
+                totalEligibleStudents: 1,
+                totalStudentsAttempted: 1,
+                avgTimeUtilizationPercentage: 1,
+                overallScore: {
+                    min: '$minScore',
+                    max: '$maxScore',
+                    avg: '$avgScore',
                 },
-                0,
-              ],
+                overallDuration: {
+                    min: '$minDuration',
+                    max: '$maxDuration',
+                    avg: '$avgDuration',
+                },
+                avgScorePercentage: {
+                    $avg: '$students.scorePercentage',
+                },
+                students: 1,
+                starStudent: {
+                    $arrayElemAt: [
+                        {
+                            $sortArray: {
+                                input: '$students',
+                                sortBy: {
+                                    scorePercentage: -1,
+                                    duration: 1, // Tie-breaker: lowest duration
+                                },
+                            },
+                        },
+                        0,
+                    ],
+                },
             },
-          },
         },
-      ]);
-      return res.status(200).json(new Apiresponse(
-        {
-            exam: {
-                title: exam.title,
-                level: exam.level,
-                totalMarks: exam.total_marks,
-                duration:exam.duration
-              }
-            ,analytics: analytics[0] || {}, // Use an empty object if no results found
-          }
-        , 200));
+    ]);
+    return res.status(200).json(
+        new Apiresponse(
+            {
+                exam: {
+                    title: exam.title,
+                    level: exam.level,
+                    totalMarks: exam.total_marks,
+                    duration: exam.duration,
+                },
+                analytics: analytics[0] || {}, // Use an empty object if no results found
+            },
+            200
+        )
+    );
 });
 const getQuestions = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(!isValidpublicId(examId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-    let exam = await Exam.findOne({public_id:examId});
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    let exam = await Exam.findOne({ public_id: examId });
     let questions = exam.questions;
     let transformedQuestions = questions.map((q) => q.toJSON());
 
@@ -541,127 +612,133 @@ const getQuestions = asyncHandler(async (req, res) => {
 
 const activateExam = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(req.role=="admin")
-    {
-    if(!isValidpublicId(examId))
-        {
+    if (req.role == 'admin') {
+        if (!isValidpublicId(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Exam Id'
             );
         }
-    let exam = await Exam.findOneAndUpdate(
-        {public_id:examId},
-        { is_active: true },
-        { new: true }
-    );
-    if (!exam) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam not found');
+        let exam = await Exam.findOneAndUpdate(
+            { public_id: examId },
+            { is_active: true },
+            { new: true }
+        );
+        if (!exam) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Exam not found'
+            );
+        }
+        return res
+            .status(200)
+            .json(new Apiresponse('Exam Activated Successfully'));
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot Activate exam'
+        );
     }
-    return res.status(200).json(new Apiresponse('Exam Activated Successfully'));
-}else
-{
-    throw new Apierror(
-        HTTP_STATUS_CODES.FORBIDDEN.code,
-        'Forbidden cannot Activate exam'
-    );
-}
 });
 const deactivateExam = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(req.role=="admin")
-    {
-    if(!isValidpublicId(examId))
-        {
+    if (req.role == 'admin') {
+        if (!isValidpublicId(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Exam Id'
             );
         }
-    let exam = await Exam.findOneAndUpdate(
-        {public_id:examId},
-        { is_active: false },
-        { new: true }
-    );
-    if (!exam) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam not found');
+        let exam = await Exam.findOneAndUpdate(
+            { public_id: examId },
+            { is_active: false },
+            { new: true }
+        );
+        if (!exam) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Exam not found'
+            );
+        }
+        return res
+            .status(200)
+            .json(new Apiresponse('Exam Deactivated Successfully'));
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot Deactivate exam'
+        );
     }
-    return res
-        .status(200)
-        .json(new Apiresponse('Exam Deactivated Successfully'));
-}else
-{
-    throw new Apierror(
-        HTTP_STATUS_CODES.FORBIDDEN.code,
-        'Forbidden cannot Deactivate exam'
-    );
-}
 });
 
 const deleteExam = asyncHandler(async (req, res) => {
-    if(req.role=="admin")
-    {
-    let examId = req.params.examId;
-    if(!isValidpublicId(examId))
-        {
+    if (req.role == 'admin') {
+        let examId = req.params.examId;
+        if (!isValidpublicId(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Exam Id'
             );
         }
- 
-    let exam = await Exam.findOne({public_id:examId});
-    if (!exam || exam.is_deleted) {
-        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
-    }
-    let docId=await getDocumentIdfromPublicid(exam.public_id,Exam,"exam");
-    const exists = await Result.findOne({ exam: docId }).lean().select('_id');
-    if (exists) {
-        exam.is_deleted = true;
-        exam.deletedAt = new Date();
-        exam.is_active = false;
-        exam.questions = [];
-        await exam.save();
+
+        let exam = await Exam.findOne({ public_id: examId });
+        if (!exam || exam.is_deleted) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'Exam Not found'
+            );
+        }
+        let docId = await getDocumentIdfromPublicid(
+            exam.public_id,
+            Exam,
+            'exam'
+        );
+        const exists = await Result.findOne({ exam: docId })
+            .lean()
+            .select('_id');
+        if (exists) {
+            exam.is_deleted = true;
+            exam.deletedAt = new Date();
+            exam.is_active = false;
+            exam.questions = [];
+            await exam.save();
+        } else {
+            await Exam.deleteOne({ _id: exam._id });
+        }
+        res.status(200).json(new Apiresponse('Exam deleted Successfully', 200));
     } else {
-        await Exam.deleteOne({ _id: exam._id });
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot delete exam'
+        );
     }
-    res.status(200).json(new Apiresponse('Exam deleted Successfully', 200));
-}else{
-    throw new Apierror(
-        HTTP_STATUS_CODES.FORBIDDEN.code,
-        'Forbidden cannot delete exam'
-    );
-}
 });
 
 //returns the results attempted by the studentid passed and creadted by admin with exam detail only
 //inflates the exam field
 const getResults = asyncHandler(async (req, res) => {
-
     /**
      * Following Two Endpoints are handled by this controller
      * 1) /:examId/results--> only for student and admin ->>extract student Id from token
      */
-    const examId=req.params.examId;
-    if(!isValidpublicId(examId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
+    const examId = req.params.examId;
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
 
-        let result=[];
-        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
-    if(req.role=="admin")
-    {
+    let result = [];
+    let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
+    if (req.role == 'admin') {
         //admin van view the exams that he is the only owner
-      
+
         //student inflate
 
         result = await Result.aggregate([
             {
-                $match: { exam: examDocId},
+                $match: { exam: examDocId },
             },
             {
                 $lookup: {
@@ -691,7 +768,7 @@ const getResults = asyncHandler(async (req, res) => {
                     createdAt: 0,
                     updatedAt: 0,
                     exam: 0,
-                    public_id:0,
+                    public_id: 0,
                     'student.password': 0,
                     'student._id': 0,
                     'student.username': 0,
@@ -699,15 +776,16 @@ const getResults = asyncHandler(async (req, res) => {
                     'student.createdAt': 0,
                     'student.updatedAt': 0,
                     'student.__v': 0,
-                    'student.public_id':0
+                    'student.public_id': 0,
                 },
             },
         ]);
-
-
-    }else if(req.role=="student")
-    {
-        let studentDocId=await getDocumentIdfromPublicid(req.user,Student,"student");
+    } else if (req.role == 'student') {
+        let studentDocId = await getDocumentIdfromPublicid(
+            req.user,
+            Student,
+            'student'
+        );
         result = await Result.aggregate([
             {
                 $match: {
@@ -734,7 +812,7 @@ const getResults = asyncHandler(async (req, res) => {
                     exam: 0,
                     __v: 0,
                     _id: 0,
-                    public_id:0,
+                    public_id: 0,
                     createdAt: 0,
                     updatedAt: 0,
                 },
@@ -751,28 +829,28 @@ const getResults = asyncHandler(async (req, res) => {
     return res.status(200).json(new Apiresponse(result, 200));
 });
 
-const getResultsbyStudent=asyncHandler(async (req,res)=>{
-
-    if(req.role=="admin")
-    {
-    let studentId = req.params.studentId;
-    let examId = req.params.examId;
-    if(!isValidpublicId(studentId))
-        {
+const getResultsbyStudent = asyncHandler(async (req, res) => {
+    if (req.role == 'admin') {
+        let studentId = req.params.studentId;
+        let examId = req.params.examId;
+        if (!isValidpublicId(studentId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Student Id'
             );
         }
-        if(!isValidpublicId(examId))
-            {
-                throw new Apierror(
-                    HTTP_STATUS_CODES.BAD_REQUEST.code,
-                    'Invalid Exam Id'
-                );
-            }
-        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
-        let studentDocId=await getDocumentIdfromPublicid(studentId,Student,"student");
+        if (!isValidpublicId(examId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
+        let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
+        let studentDocId = await getDocumentIdfromPublicid(
+            studentId,
+            Student,
+            'student'
+        );
 
         let results = await Result.aggregate([
             {
@@ -800,7 +878,7 @@ const getResultsbyStudent=asyncHandler(async (req,res)=>{
                     exam: 0,
                     __v: 0,
                     _id: 0,
-                    public_id:0,
+                    public_id: 0,
                     createdAt: 0,
                     updatedAt: 0,
                 },
@@ -812,95 +890,91 @@ const getResultsbyStudent=asyncHandler(async (req,res)=>{
                 'No Associated Result Found For this Exam'
             );
         }
-    
+
         return res.status(200).json(new Apiresponse(results, 200));
-    }else
-    {
+    } else {
         //throw unauthorized erro
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Forbidden cannot access the result");
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot access the result'
+        );
     }
 });
 //returning all the results of the exam from examid
 //inflates student
 const getStudents = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
-    if(req.role=="admin")
-    {
-
-    if(!isValidpublicId(examId))
-        {
+    if (req.role == 'admin') {
+        if (!isValidpublicId(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Exam Id'
             );
         }
-        let examDocId=await getDocumentIdfromPublicid(examId,Exam,"exam");
-    let students = await Result.aggregate([
-        {
-            $match: { exam:examDocId },
-        },
-        {
-            $lookup: {
-                from: 'students',
-                localField: 'student',
-                foreignField: '_id',
-                as: 'student',
+        let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
+        let students = await Result.aggregate([
+            {
+                $match: { exam: examDocId },
             },
-        },
-        {
-            $unwind: {
-                path: '$student',
+            {
+                $lookup: {
+                    from: 'students',
+                    localField: 'student',
+                    foreignField: '_id',
+                    as: 'student',
+                },
             },
-        },
-        {
-            $group: {
-                _id: '$student._id',
-                documents: { $first: '$$ROOT' },
+            {
+                $unwind: {
+                    path: '$student',
+                },
             },
-        },
-        {
-            $project: {
-                student_id: '$documents.student.public_id',
-                fullname: '$documents.student.fullname',
-                email: '$documents.student.email',
-                level: '$documents.student.level',
-                sclass: '$documents.student.sclass',
-                phone_no: '$documents.student.phone_no',
-                is_deleted: '$documents.student.is_deleted',
-                deletedAt: '$documents.student.deletedAt',
-                _id: 0,
+            {
+                $group: {
+                    _id: '$student._id',
+                    documents: { $first: '$$ROOT' },
+                },
             },
-        },
-    ]);
-    if (students.length == 0) {
+            {
+                $project: {
+                    student_id: '$documents.student.public_id',
+                    fullname: '$documents.student.fullname',
+                    email: '$documents.student.email',
+                    level: '$documents.student.level',
+                    sclass: '$documents.student.sclass',
+                    phone_no: '$documents.student.phone_no',
+                    is_deleted: '$documents.student.is_deleted',
+                    deletedAt: '$documents.student.deletedAt',
+                    _id: 0,
+                },
+            },
+        ]);
+        if (students.length == 0) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.NOT_FOUND.code,
+                'No Student Found'
+            );
+        }
+        return res.status(200).json(new Apiresponse(students, 200));
+    } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.NOT_FOUND.code,
-            'No Student Found'
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot access student attempted the exam'
         );
     }
-    return res.status(200).json(new Apiresponse(students, 200));
-}
-else
-{
-    throw new Apierror(
-        HTTP_STATUS_CODES.FORBIDDEN.code,
-        'Forbidden cannot access student attempted the exam'
-    );
-}
 });
 
 const deleteResults = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
 
-    if(!isValidpublicId(examId))
-        {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
     let userId = req.user;
-    let exam = await Exam.findOne({public_id:examId});
+    let exam = await Exam.findOne({ public_id: examId });
     //can delete the results even if the exam is deleted
     if (!exam) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
@@ -908,7 +982,11 @@ const deleteResults = asyncHandler(async (req, res) => {
 
     //role based access
     if (req.role == 'admin') {
-        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
+        let adminDocId = await getDocumentIdfromPublicid(
+            userId,
+            Admin,
+            'admin'
+        );
         if (exam.created_by.equals(adminDocId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(
@@ -924,7 +1002,11 @@ const deleteResults = asyncHandler(async (req, res) => {
             );
         }
     } else if (req.role == 'student') {
-        let studentDocId=await getDocumentIdfromPublicid(userId,Student,"student");
+        let studentDocId = await getDocumentIdfromPublicid(
+            userId,
+            Student,
+            'student'
+        );
         let deletedObj = await Result.deleteMany({
             exam: exam._id,
             student: studentDocId,
@@ -960,17 +1042,16 @@ const updateExam = asyncHandler(async (req, res) => {
             );
         }
 
-        if(!isValidpublicId(examId))
-            {
-                throw new Apierror(
-                    HTTP_STATUS_CODES.BAD_REQUEST.code,
-                    'Invalid Exam Id'
-                );
-            }
+        if (!isValidpublicId(examId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
 
         let userId = req.user;
 
-        const exists = await Exam.findOne({public_id: examId })
+        const exists = await Exam.findOne({ public_id: examId })
             .lean()
             .select('_id created_by');
 
@@ -980,7 +1061,11 @@ const updateExam = asyncHandler(async (req, res) => {
                 'Exam Not Found'
             );
         }
-        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
+        let adminDocId = await getDocumentIdfromPublicid(
+            userId,
+            Admin,
+            'admin'
+        );
         //check whether the admin is editing the exam which is only created by him
         if (!exists.created_by.equals(adminDocId)) {
             throw new Apierror(
@@ -1044,16 +1129,15 @@ const generateQuestions = asyncHandler(async (req, res) => {
             );
         }
 
-        if(!isValidpublicId(examId))
-            {
-                throw new Apierror(
-                    HTTP_STATUS_CODES.BAD_REQUEST.code,
-                    'Invalid Exam Id'
-                );
-            }
+        if (!isValidpublicId(examId)) {
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                'Invalid Exam Id'
+            );
+        }
         let userId = req.user;
 
-        const exists = await Exam.findOne({public_id: examId })
+        const exists = await Exam.findOne({ public_id: examId })
             .lean()
             .select('_id created_by');
 
@@ -1063,7 +1147,11 @@ const generateQuestions = asyncHandler(async (req, res) => {
                 'Exam Not Found'
             );
         }
-        let adminDocId=await getDocumentIdfromPublicid(userId,Admin,"admin");
+        let adminDocId = await getDocumentIdfromPublicid(
+            userId,
+            Admin,
+            'admin'
+        );
         //check whether the admin is editing the exam which is only created by him
         if (!exists.created_by.equals(adminDocId)) {
             throw new Apierror(
@@ -1141,5 +1229,5 @@ export {
     generateQuestions,
     getResultsbyStudent,
     getPracticeexamnAnalytics,
-    getAssessmentexamAnalytics
+    getAssessmentexamAnalytics,
 };
