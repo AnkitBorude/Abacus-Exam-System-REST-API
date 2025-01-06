@@ -6,12 +6,19 @@ import { resultRouter } from './routes/result.router.js';
 import process from 'node:process';
 import getDbHealth from './db/db.health.js';
 import helmet from 'helmet';
+import morgan from 'morgan';
+import { logger } from '../logger/index.logger.js';
 const app = express();
 
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(express.static('public'));
 app.use(helmet());
+app.use(morgan('common',{
+    stream:{
+    write:(message)=>logger.http(message)
+}
+}));
 app.use('/api/v1/student', studentRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/exam', examRouter);
@@ -38,6 +45,7 @@ app.get('/health', async (req, res) => {
 });
 
 app.use((req, res, next) => {
+    logger.warn(`The requested resource ${req.method} ${req.originalUrl} was not found on this server.`);
     res.status(404).json({
         success: false,
         message: `The requested resource ${req.method} ${req.originalUrl} was not found on this server.`,
@@ -47,11 +55,12 @@ app.use((req, res, next) => {
 
 app.use((err, req, res, next) => {
     // Handle all other errors
+    logger.error(`Internal Error occurred: ${err.message}\n${err.stack}`);
     res.status(err.status || 500).json({
         error: 'Internal Server Error',
         message: err.message || 'An unexpected error occurred.',
         timestamp: new Date(),
-        statusCode: 400,
+        statusCode:err.status || 500,
     });
     return next;
 });
