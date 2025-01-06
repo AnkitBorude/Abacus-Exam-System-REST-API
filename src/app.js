@@ -3,7 +3,7 @@ import { studentRouter } from './routes/student.router.js';
 import { adminRouter } from './routes/admin.router.js';
 import { examRouter } from './routes/exam.router.js';
 import { resultRouter } from './routes/result.router.js';
-import {process} from 'node:process';
+import process from 'node:process';
 import getDbHealth from './db/db.health.js';
 import helmet from 'helmet';
 const app = express();

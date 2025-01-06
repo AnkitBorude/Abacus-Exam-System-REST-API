@@ -9,6 +9,7 @@ import { startLocalmongoDBserver } from './utils/localhost-mongodb.start.js';
 import os from 'node:os';
 import config from 'config';
 import chalk from 'chalk';
+import { logger } from '../logger/index.logger.js';
 /**
  * @property()
  */
@@ -16,6 +17,7 @@ let server;
 let mongoDatabaseInstance;
 try {
     console.log(chalk.greenBright('Starting Server Initialization...'));
+    logger.info("This is the starting log");
     logServerStart();
     console.log('='.repeat(50));
     //start localhost mongodb service
