@@ -9,7 +9,6 @@ import { startLocalmongoDBserver } from './utils/localhost-mongodb.start.js';
 import os from 'node:os';
 import config from 'config';
 import chalk from 'chalk';
-import getDbHealth from './db/db.health.js';
 /**
  * @property()
  */
@@ -74,26 +73,6 @@ try {
         console.log('-'.repeat(50));
     });
 
-    app.get('/echo', (req, res) => {
-        res.json({ ...req.body, echoed: true });
-    });
-
-    app.get('/health', async (req, res) => {
-        //check the health of the external dependencies
-
-        let health = 'healthy';
-        let database = await getDbHealth();
-        health = database.health;
-        res.json({
-            status: health,
-            timestamp: new Date().toISOString(),
-            uptime: process.uptime(),
-            version: process.env.npm_package_version,
-            environment: process.env.NODE_ENV,
-            database: database,
-        });
-    });
-
     process.on('SIGINT', () => gracefullShutdown('SIGINT'));
     process.on('SIGTERM', () => gracefullShutdown('SIGTERM'));
     process.on('SIGQUIT', () => gracefullShutdown('SIGQUIT'));
@@ -103,7 +82,6 @@ try {
     }
     console.log(error);
     process.exit(1);
-    //printing error on log/
 }
 
 function logServerStart() {
