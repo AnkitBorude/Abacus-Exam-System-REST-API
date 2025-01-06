@@ -15,6 +15,7 @@ import {
     getDocumentIdfromPublicid,
     isValidpublicId,
 } from '../utils/publicId/validid.util.js';
+import { studentValidationschema } from '../middlewares/studentValidation.middleware.js';
 
 const registerStudent = asyncHandler(async (req, res) => {
     if (req.validationError) {
@@ -164,18 +165,33 @@ const getStudents = asyncHandler(async (req, res) => {
             query.level = level;
         }
         if (name) {
-            query.fullname = { $regex: '^' + name, $options: 'i' };
-        } //regex to search the fullname starts with the query string name passed with
+            query.fullname=name;
+        } 
         let students = null;
-        try {
+        let queryValidation=Joi.object(
+            {
+                fullname:studentValidationschema.extract('fullname'),
+                level:studentValidationschema.extract('level'),
+                sclass:studentValidationschema.extract('sclass')
+            }).unknown(false);
+        const { error } =queryValidation.validate(query);
+        if (error) {
+            //attaching the error message to req object
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,error.details[0].message);
+        }
+        if(name)
+        {
+            //regex to search the fullname starts with the query string name passed with
+            query.fullname = { $regex: '^' + name, $options: 'i' };
+        }
+
+        query.fullname = 
             students = await Student.find(query).select(
                 '-password -refreshToken -__v'
             );
-        } catch (error) {
-            throw new Apierror(489, error.message);
-        }
+    
         if (students.length == 0) {
-            throw new Apierror(490, 'No students found');
+            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'No students found');
         }
 
         return res.status(200).json(
