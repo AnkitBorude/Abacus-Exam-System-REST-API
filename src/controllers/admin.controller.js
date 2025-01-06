@@ -23,8 +23,6 @@ const registerAdmin = asyncHandler(async (req, res) => {
     }
 
     const { fullname, email, username, password } = req.body;
-   
-   
 
     try {
         const admin = await Admin.create({
@@ -41,9 +39,15 @@ const registerAdmin = asyncHandler(async (req, res) => {
             error.keyPattern &&
             error.keyPattern.username
         ) {
-            throw new Apierror(HTTP_STATUS_CODES.CONFLICT.code, 'Username already Exists');
+            throw new Apierror(
+                HTTP_STATUS_CODES.CONFLICT.code,
+                'Username already Exists'
+            );
         } else {
-            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code, error.message);
+            throw new Apierror(
+                HTTP_STATUS_CODES.BAD_REQUEST.code,
+                error.message
+            );
         }
     }
 });
@@ -112,16 +116,14 @@ const loginAdmin = asyncHandler(async (req, res) => {
     );
 });
 const getCurrentAdmin = asyncHandler(async (req, res) => {
- 
-        let admin = await Admin.findOne({ public_id: req.user }).select(
-            'is_deleted'
-        );
-        if(admin.is_deleted)
-        {
-            throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code,"Admin Not Found");
-        }
-        admin = admin.toJSON();
-        return res.status(200).json(new Apiresponse(admin, 200));
+    let admin = await Admin.findOne({ public_id: req.user }).select(
+        'is_deleted'
+    );
+    if (admin.is_deleted) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Admin Not Found');
+    }
+    admin = admin.toJSON();
+    return res.status(200).json(new Apiresponse(admin, 200));
 });
 
 const regenerateAccessToken = asyncHandler(async (req, res) => {
@@ -192,11 +194,9 @@ const regenerateAccessToken = asyncHandler(async (req, res) => {
     );
 });
 
-const updateAdmin=asyncHandler(async (req,res)=>{
-
-    if(req.role=="admin")
-    {
-        let adminId=req.user;
+const updateAdmin = asyncHandler(async (req, res) => {
+    if (req.role == 'admin') {
+        let adminId = req.user;
         if (req.validationError) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -240,19 +240,18 @@ const updateAdmin=asyncHandler(async (req,res)=>{
                 200
             )
         );
-    }
-    else
-    {
+    } else {
         //throw forbidden error here\
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot update admin details');
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot update admin details'
+        );
     }
 });
 
-const deleteAdmin=asyncHandler(async (req,res)=>{
-
-    if(req.role=="admin")
-    {
-        let adminId=req.user;
+const deleteAdmin = asyncHandler(async (req, res) => {
+    if (req.role == 'admin') {
+        let adminId = req.user;
         if (!isValidpublicId(adminId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -263,59 +262,72 @@ const deleteAdmin=asyncHandler(async (req,res)=>{
         let admin = await Admin.findOne({
             public_id: adminId,
             is_deleted: false,
-        })
-            .select('_id public_id is_deleted deletedAt username');
+        }).select('_id public_id is_deleted deletedAt username');
         if (!admin) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Admin Not Found'
             );
         }
-          
-            //now check whether the admin has creates any exam
-                //if the exam is created then find if there exists at lea
 
-            const examExists = await Exam.find({ created_by: admin._id }).lean().select('_id');
-            if(examExists.length===0)
-            {
-                 //no exam exists
-                //hard delete
-                console.log("No exam exists hard deleting admin");
-                await Admin.deleteOne({ public_id: adminId });
-                return res.status(200).json(
-                  new Apiresponse(`Admin deleted Permantely`, 200)
-              );
-            }
-                //there exists an exam
-                const examIds = examExists.map(exam => exam._id);
-                const resultCounts=await Result.countDocuments({ exam: { $in: examIds } });
-                if(resultCounts>0)
-                {
-                    console.log("There are associated "+resultCounts+"Thus soft deleting admin");
-                    //soft delete admin
-                    admin.is_deleted = true;
-                    admin.deletedAt = new Date();
-                    //making the soft deleted students username reusable
-                    admin.username = admin.username + 'deletedAt' + Date.now();
-                    await admin.save();
-                    res.status(200).json(
-                        new Apiresponse(`Admin deleted Successfully`, 200)
-                    );
-                }
-                else
-                {
-                    //then delete all exams and then admin
-                    console.log("No Students attempted the exam thus deleting created exams and admin");
-                    await Exam.deleteMany({created_by:admin._id});
-                    await Admin.deleteOne({ public_id: adminId });
-                    res.status(200).json(
-                        new Apiresponse(`Admin deleted Permantenly`, 200)
-                    );
-                }
-          
-    }else{
+        //now check whether the admin has creates any exam
+        //if the exam is created then find if there exists at lea
 
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code, 'Forbidden cannot delete admin');
+        const examExists = await Exam.find({ created_by: admin._id })
+            .lean()
+            .select('_id');
+        if (examExists.length === 0) {
+            //no exam exists
+            //hard delete
+            console.log('No exam exists hard deleting admin');
+            await Admin.deleteOne({ public_id: adminId });
+            return res
+                .status(200)
+                .json(new Apiresponse(`Admin deleted Permantely`, 200));
+        }
+        //there exists an exam
+        const examIds = examExists.map((exam) => exam._id);
+        const resultCounts = await Result.countDocuments({
+            exam: { $in: examIds },
+        });
+        if (resultCounts > 0) {
+            console.log(
+                'There are associated ' +
+                    resultCounts +
+                    'Thus soft deleting admin'
+            );
+            //soft delete admin
+            admin.is_deleted = true;
+            admin.deletedAt = new Date();
+            //making the soft deleted students username reusable
+            admin.username = admin.username + 'deletedAt' + Date.now();
+            await admin.save();
+            res.status(200).json(
+                new Apiresponse(`Admin deleted Successfully`, 200)
+            );
+        } else {
+            //then delete all exams and then admin
+            console.log(
+                'No Students attempted the exam thus deleting created exams and admin'
+            );
+            await Exam.deleteMany({ created_by: admin._id });
+            await Admin.deleteOne({ public_id: adminId });
+            res.status(200).json(
+                new Apiresponse(`Admin deleted Permantenly`, 200)
+            );
+        }
+    } else {
+        throw new Apierror(
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'Forbidden cannot delete admin'
+        );
     }
 });
-export { registerAdmin, loginAdmin, getCurrentAdmin, regenerateAccessToken,updateAdmin,deleteAdmin };
+export {
+    registerAdmin,
+    loginAdmin,
+    getCurrentAdmin,
+    regenerateAccessToken,
+    updateAdmin,
+    deleteAdmin,
+};

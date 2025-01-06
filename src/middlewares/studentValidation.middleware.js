@@ -52,4 +52,4 @@ const studentValidation = (req, res, next) => {
     next();
 };
 
-export { studentValidation,studentValidationschema };
+export { studentValidation, studentValidationschema };

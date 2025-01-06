@@ -71,4 +71,4 @@ const examValidation = (req, res, next) => {
     //only validate with basic examschema
 };
 
-export { examValidation ,examValidationschema};
+export { examValidation, examValidationschema };

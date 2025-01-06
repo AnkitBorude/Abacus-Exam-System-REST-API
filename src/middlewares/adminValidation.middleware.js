@@ -17,7 +17,7 @@ let adminValidationschema = Joi.object({
     }),
 }).options({ allowUnknown: false });
 
-const adminValidation=(req,res,next)=>{
+const adminValidation = (req, res, next) => {
     let validationSchema = null;
     if (req.method === 'POST') {
         //making all the fields required if the request is post else the default optional is
@@ -35,5 +35,5 @@ const adminValidation=(req,res,next)=>{
         req.validationError = error.details[0].message;
     }
     next();
-}
-export {adminValidation};
+};
+export { adminValidation };
