@@ -240,14 +240,15 @@ const getExams = asyncHandler(async (req, res) => {
 
 const getPracticeexamnAnalytics = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
-    if(req.role=="admin" && await isAdminOwnerofExam(req.user,examId))
-    {
     if (!isValidpublicId(examId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
             'Invalid Exam Id'
         );
     }
+    if(req.role=="admin" && await isAdminOwnerofExam(req.user,examId))
+    {
+    
     let exam = await Exam.findOne({ public_id: examId }).select('-questions');
     if (!exam || exam.isSingleAttempt) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not Found');
@@ -465,6 +466,8 @@ const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
             'Invalid Exam Id'
         );
     }
+    if(req.role=="admin" && isAdminOwnerofExam(req.user,examId))
+    {
     let exam = await Exam.findOne({ public_id: examId }).select('-questions');
     if (!exam) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not Found');
@@ -602,6 +605,10 @@ const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
             200
         )
     );
+}
+else{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access this exam analytics");
+}
 });
 const getQuestions = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
@@ -741,7 +748,10 @@ const getResults = asyncHandler(async (req, res) => {
     let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
     if (req.role == 'admin') {
         //admin van view the exams that he is the only owner
-
+        if(!isAdminOwnerofExam(req.user,examId))
+        {
+            throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access this exam result");
+        }
         //student inflate
 
         result = await Result.aggregate([
