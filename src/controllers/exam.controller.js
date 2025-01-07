@@ -466,7 +466,7 @@ const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
             'Invalid Exam Id'
         );
     }
-    if(req.role=="admin" && isAdminOwnerofExam(req.user,examId))
+    if(req.role=="admin" && await isAdminOwnerofExam(req.user,examId))
     {
     let exam = await Exam.findOne({ public_id: examId }).select('-questions');
     if (!exam) {
@@ -687,35 +687,28 @@ const deactivateExam = asyncHandler(async (req, res) => {
 });
 
 const deleteExam = asyncHandler(async (req, res) => {
-    if (req.role == 'admin') {
-        let examId = req.params.examId;
+    let examId = req.params.examId;
         if (!isValidpublicId(examId)) {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Invalid Exam Id'
             );
         }
-
-        let exam = await Exam.findOne({ public_id: examId });
+    if (req.role == 'admin' && await isAdminOwnerofExam(req.user,examId)) {
+        let exam = await Exam.findOne({ public_id: examId }).select("_id is_deleted deletedAt is_active");
         if (!exam || exam.is_deleted) {
             throw new Apierror(
                 HTTP_STATUS_CODES.NOT_FOUND.code,
                 'Exam Not found'
             );
         }
-        let docId = await getDocumentIdfromPublicid(
-            exam.public_id,
-            Exam,
-            'exam'
-        );
-        const exists = await Result.findOne({ exam: docId })
+        const exists = await Result.findOne({ exam: exam._id })
             .lean()
             .select('_id');
         if (exists) {
             exam.is_deleted = true;
             exam.deletedAt = new Date();
             exam.is_active = false;
-            exam.questions = [];
             await exam.save();
         } else {
             await Exam.deleteOne({ _id: exam._id });
@@ -724,7 +717,7 @@ const deleteExam = asyncHandler(async (req, res) => {
     } else {
         throw new Apierror(
             HTTP_STATUS_CODES.FORBIDDEN.code,
-            'Forbidden cannot delete exam'
+            'You dont have permission to delete this exam'
         );
     }
 });
@@ -748,7 +741,7 @@ const getResults = asyncHandler(async (req, res) => {
     let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
     if (req.role == 'admin') {
         //admin van view the exams that he is the only owner
-        if(!isAdminOwnerofExam(req.user,examId))
+        if(!await isAdminOwnerofExam(req.user,examId))
         {
             throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access this exam result");
         }
@@ -848,21 +841,22 @@ const getResults = asyncHandler(async (req, res) => {
 });
 
 const getResultsbyStudent = asyncHandler(async (req, res) => {
-    if (req.role == 'admin') {
-        let studentId = req.params.studentId;
-        let examId = req.params.examId;
-        if (!isValidpublicId(studentId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Student Id'
-            );
-        }
-        if (!isValidpublicId(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
+    let studentId = req.params.studentId;
+    let examId = req.params.examId;
+    if (!isValidpublicId(studentId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Student Id'
+        );
+    }
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+
+    if (req.role == 'admin' && await isAdminOwnerofExam(req.user,examId)) {
         let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
         let studentDocId = await getDocumentIdfromPublicid(
             studentId,
@@ -911,24 +905,20 @@ const getResultsbyStudent = asyncHandler(async (req, res) => {
 
         return res.status(200).json(new Apiresponse(results, 200));
     } else {
-        //throw unauthorized erro
-        throw new Apierror(
-            HTTP_STATUS_CODES.FORBIDDEN.code,
-            'Forbidden cannot access the result'
-        );
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access this exam result");
     }
 });
 //returning all the results of the exam from examid
 //inflates student
 const getStudents = asyncHandler(async (req, res) => {
     let examId = req.params.examId;
-    if (req.role == 'admin') {
-        if (!isValidpublicId(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    if (req.role == 'admin'&& await isAdminOwnerofExam(req.user,examId)) {
         let examDocId = await getDocumentIdfromPublicid(examId, Exam, 'exam');
         let students = await Result.aggregate([
             {
@@ -975,10 +965,7 @@ const getStudents = asyncHandler(async (req, res) => {
         }
         return res.status(200).json(new Apiresponse(students, 200));
     } else {
-        throw new Apierror(
-            HTTP_STATUS_CODES.FORBIDDEN.code,
-            'Forbidden cannot access student attempted the exam'
-        );
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access students of this exam");
     }
 });
 
@@ -992,20 +979,14 @@ const deleteResults = asyncHandler(async (req, res) => {
         );
     }
     let userId = req.user;
-    let exam = await Exam.findOne({ public_id: examId });
+    let exam = await Exam.findOne({ public_id: examId }).select("_id").lean();
     //can delete the results even if the exam is deleted
     if (!exam) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
     }
 
     //role based access
-    if (req.role == 'admin') {
-        let adminDocId = await getDocumentIdfromPublicid(
-            userId,
-            Admin,
-            'admin'
-        );
-        if (exam.created_by.equals(adminDocId)) {
+    if (req.role == 'admin' && await isAdminOwnerofExam(req.user,examId)) {
             let deletedObj = await Result.deleteMany({ exam: exam._id });
             res.status(200).json(
                 new Apiresponse(
@@ -1013,12 +994,6 @@ const deleteResults = asyncHandler(async (req, res) => {
                     200
                 )
             );
-        } else {
-            throw new Apierror(
-                HTTP_STATUS_CODES.FORBIDDEN.code,
-                'Forbidden cannot delete the results'
-            );
-        }
     } else if (req.role == 'student') {
         let studentDocId = await getDocumentIdfromPublicid(
             userId,
@@ -1038,7 +1013,7 @@ const deleteResults = asyncHandler(async (req, res) => {
     } else {
         throw new Apierror(
             HTTP_STATUS_CODES.UNAUTHORIZED.code,
-            'Unauthorized Cannot delete'
+            'You dont have permission to access this exam analytics'
         );
     }
 });
