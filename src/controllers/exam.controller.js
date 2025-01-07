@@ -14,6 +14,7 @@ import {
 import { getBooleanfromQueryParameter } from '../utils/query/booleanValue.util.js';
 import Joi from 'joi';
 import { examValidationschema } from '../middlewares/examValidation.middleware.js';
+import { isAdminOwnerofExam } from '../utils/exam/examOwnership.util.js';
 
 const createExam = asyncHandler(async (req, res) => {
     if (req.role == 'admin') {
@@ -64,8 +65,8 @@ const createExam = asyncHandler(async (req, res) => {
 
         await exam.save();
         return res
-            .status(200)
-            .json(new Apiresponse('Exam Created Successfully'), 200);
+            .status(201)
+            .json(new Apiresponse('Exam Created Successfully',201));
     } else {
         throw new Apierror(
             HTTP_STATUS_CODES.FORBIDDEN.code,
@@ -182,6 +183,7 @@ const getExams = asyncHandler(async (req, res) => {
                     'exam.questions': 0,
                     'exam._id': 0,
                     'exam.__v': 0,
+                    'exam.public_id':0,
                     'exam.created_by': 0,
                     'exam.updatedAt': 0, /// Optional: Exclude results field
                 },
@@ -238,6 +240,8 @@ const getExams = asyncHandler(async (req, res) => {
 
 const getPracticeexamnAnalytics = asyncHandler(async (req, res) => {
     const examId = req.params.examId;
+    if(req.role=="admin" && await isAdminOwnerofExam(req.user,examId))
+    {
     if (!isValidpublicId(examId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
@@ -447,6 +451,10 @@ const getPracticeexamnAnalytics = asyncHandler(async (req, res) => {
             200
         )
     );
+}else
+{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You dont have permission to access this exam analytics");
+}
 });
 
 const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
@@ -632,7 +640,7 @@ const activateExam = asyncHandler(async (req, res) => {
         }
         return res
             .status(200)
-            .json(new Apiresponse('Exam Activated Successfully'));
+            .json(new Apiresponse('Exam Activated Successfully',200));
     } else {
         throw new Apierror(
             HTTP_STATUS_CODES.FORBIDDEN.code,
