@@ -8,7 +8,6 @@ import { getConnection } from './db/db.connection.js';
 import { startLocalmongoDBserver } from './utils/localhost-mongodb.start.js';
 import os from 'node:os';
 import config from 'config';
-import chalk from 'chalk';
 import { logger } from '../logger/index.logger.js';
 /**
  * @property()
@@ -16,63 +15,46 @@ import { logger } from '../logger/index.logger.js';
 let server;
 let mongoDatabaseInstance;
 try {
-    console.log(chalk.greenBright('Starting Server Initialization...'));
-    logger.info("This is the starting log");
+    logger.info('Starting Server Initialization...');
     logServerStart();
-    console.log('='.repeat(50));
     //start localhost mongodb service
     if (config.util.getEnv('NODE_ENV') == 'development') {
         try {
-            console.log(
-                chalk.yellowBright(
-                    'Development Server: Executing MongoDB  service startup script'
-                )
-            );
-            await startLocalmongoDBserver();
+            
+                    logger.verbose('Development Server: Executing MongoDB  service startup script');
+                    await startLocalmongoDBserver();
         } catch (error) {
-            console.log(chalk.redBright(error));
-            console.log(
-                chalk.bgYellowBright(
-                    chalk.redBright(
-                        'Try to manually start the mongodb service from system through command line'
-                    )
-                )
-            );
+           logger.error(error);
+           logger.warn('Try to manually start the mongodb service from system through command line');
+           
         }
     } else {
-        console.log(
-            chalk.yellowBright(
+        
+            logger.verbose(
                 'Production Server: Connecting to MongoDB server on enviroment url...'
-            )
         );
     }
     //connecting to database
     mongoDatabaseInstance = await getConnection();
-    console.log(chalk.cyan('='.repeat(50)));
     server = app.listen(config.get('Application.Port'), () => {
-        console.log(
-            chalk.yellowBright(
+        logger.info(
+           
                 `Server is running on port ${config.get('Application.Port')}`
-            )
         );
         if (config.util.getEnv('NODE_ENV') == 'development') {
-            console.log(
-                chalk.greenBright(
+          
+                logger.info(
                     `Listening on Localhost -->  http://localhost:${config.get('Application.Port')}`
-                )
             );
-            console.log(
-                chalk.cyanBright(
+          
+                logger.info(
                     `Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get('Application.Port')}`
-                )
-            );
+                );
         } else {
-            console.log(`http://localhost:${config.get('Application.Port')}`);
+            logger.verbose(`http://localhost:${config.get('Application.Port')}`);
         }
-        console.log(
-            chalk.bgGreen(chalk.blueBright('Successfully started server'))
-        );
-        console.log('-'.repeat(50));
+        
+        logger.info('Successfully started server');
     });
 
     process.on('SIGINT', () => gracefullShutdown('SIGINT'));
@@ -82,25 +64,25 @@ try {
     if (server) {
         gracefullShutdown('UnCaughtException');
     }
-    console.log(error);
+    logger.error(error);
     process.exit(1);
 }
 
 function logServerStart() {
-    console.log('='.repeat(50));
-    console.log(`Server Startup - ${new Date().toISOString()}`);
-    console.log('='.repeat(50));
-    console.log(`Environment: ${process.env.NODE_ENV}`);
-    console.log(`Node.js Version: ${process.version}`);
-    console.log(`OS: ${os.type()} ${os.release()}`);
-    console.log(`Processor Architecture: ${os.arch()}`);
-    console.log(
+    logger.info('='.repeat(50));
+    logger.info(`Server Startup - ${new Date().toISOString()}`);
+    logger.info('='.repeat(50));
+    logger.info(`Environment: ${process.env.NODE_ENV}`);
+    logger.info(`Node.js Version: ${process.version}`);
+    logger.info(`OS: ${os.type()} ${os.release()}`);
+    logger.info(`Processor Architecture: ${os.arch()}`);
+    logger.info(
         `Total Memory: ${(os.totalmem() / 1024 / 1024 / 1024).toFixed(2)} GB`
     );
-    console.log(
+    logger.info(
         `Available Memory: ${(os.freemem() / 1024 / 1024 / 1024).toFixed(2)} GB`
     );
-    console.log('='.repeat(50));
+    logger.info('='.repeat(50));
 }
 
 function getIpAddresses() {
@@ -118,11 +100,11 @@ function getIpAddresses() {
 }
 
 function gracefullShutdown(signal) {
-    console.log(
-        chalk.yellowBright(`Received ${signal}.\nStarting graceful shutdown...`)
+    logger.warn(
+       `Received ${signal}.\nStarting graceful shutdown...`
     );
     server.close(async () => {
         await mongoDatabaseInstance.disconnect();
-        console.log(chalk.greenBright('HTTP server closed.'));
+        logger.warn('HTTP server closed.');
     });
 }
