@@ -1,42 +1,40 @@
 import mongoose from 'mongoose';
 import process from 'node:process';
 import config from 'config';
-import chalk from 'chalk';
 import getDbHealth from './db.health.js';
+import { logger } from '../../logger/index.logger.js';
 export async function getConnection() {
     try {
         let connectionInstance = await mongoose.connect(
             `${process.env.MONGODB_CONNECTION_URL}/${config.get('DB.name')}`
         );
-        console.log(chalk.greenBright(`MongoDB Database Connected :}`));
+        logger.info(`MongoDB Database Connected :}`);
         let responseTime = (await getDbHealth()).responseTime;
-        console.log(
-            chalk.blueBright('Database Response Time:' + responseTime + ' ms')
-        );
+        logger.info('Database Response Time:' + responseTime + ' ms');
         return connectionInstance;
     } catch (error) {
-        console.log(chalk.redBright('MongoDB Connection Failed : ' + error));
+        logger.error('MongoDB Connection Failed : ' + error);
         throw error;
     }
 }
 mongoose.connection.on('connecting', () =>
-    console.log(chalk.yellowBright('MongoDB connecting...'))
+   logger.verbose('MongoDB connecting...')
 );
 mongoose.connection.on('connected', () =>
-    console.log(chalk.greenBright('MongoDB connected'))
+   logger.verbose('MongoDB connected')
 );
 mongoose.connection.on('open', () =>
-    console.log(chalk.greenBright('MongoDB connection open'))
+    logger.verbose('MongoDB connection open')
 );
 mongoose.connection.on('disconnected', () =>
-    console.log(chalk.redBright('MongoDB disconnected'))
+    logger.verbose('MongoDB disconnected')
 );
 mongoose.connection.on('reconnected', () =>
-    console.log(chalk.greenBright('MongoDB reconnected'))
+    logger.verbose('MongoDB reconnected')
 );
 mongoose.connection.on('disconnecting', () =>
-    console.log(chalk.yellowBright('MongoDB disconnecting....'))
+    logger.verbose('MongoDB disconnecting....')
 );
 mongoose.connection.on('close', () =>
-    console.log(chalk.yellowBright('MongoDB close'))
+    logger.verbose('MongoDB close')
 );
