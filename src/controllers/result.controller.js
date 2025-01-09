@@ -144,6 +144,8 @@ const getResult = asyncHandler(async (req, res) => {
 });
 
 const deleteResult = asyncHandler(async (req, res) => {
+
+    //todo do not let student to delete result of assessment exam
     let resultId = req.params.resultId;
     if (!isValidpublicId(resultId)) {
         throw new Apierror(
@@ -151,16 +153,20 @@ const deleteResult = asyncHandler(async (req, res) => {
             'Invalid Result Id'
         );
     }
-
-    let result = await Result.findOne({ public_id: resultId });
-    if (!result) {
+    let query={ public_id: resultId };
+    if(req.role=="student")
+    {
+        let student=await getDocumentIdfromPublicid(req.user,Student,"Student");
+        query.student=student;
+    }
+    let deleteObj=await Result.deleteOne(query);
+    if(deleteObj.deletedCount<1)
+    {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
             'Result Not found'
         );
     }
-
-    await Result.deleteOne({ _id: result._id });
     res.status(200).json(new Apiresponse(`Result Deleted Successfully`, 200));
 });
 export { createResult, getResult, deleteResult };
