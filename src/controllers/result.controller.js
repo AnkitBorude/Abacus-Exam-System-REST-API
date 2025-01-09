@@ -6,14 +6,16 @@ import { getPdf } from './pdf.controller.js';
 import { flattenObject } from '../utils/flattenObject.util.js';
 import { Pdftemplet } from '../pdftemplets/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
-import Joi from 'joi';
 import { Exam } from '../models/exam.model.js';
 import {
     isValidpublicId,
 } from '../utils/publicId/validid.util.js';
 import { Student } from '../models/student.model.js';
+import { validateResultBody, validateResultDatawithExam } from '../utils/result/validateResult.util.js';
 
 const createResult = asyncHandler(async (req, res) => {
+    if(req.role=="student")
+    {
     const { score, time_taken, total_correct, date_completed, exam } = req.body;
 
     //validating the result
@@ -23,47 +25,8 @@ const createResult = asyncHandler(async (req, res) => {
             'Request body cannot be empty.'
         );
     }
-
-    const { error } = Joi.object({
-        time_taken: Joi.number().integer().required().min(1).max(360).messages({
-            'number.base': 'duration must be a number.',
-            'number.min': 'duration must be at least 1.',
-            'number.max': 'duration cannot exceed 360.',
-        }),
-        score: Joi.number().integer().min(1).max(5000).required().messages({
-            'number.base': 'total_questions must be a number.',
-            'number.min': 'total_questions must be at least 1.',
-            'number.max': 'total_questions cannot exceed 5000.',
-        }),
-        total_correct: Joi.number()
-            .integer()
-            .min(1)
-            .max(500)
-            .required()
-            .messages({
-                'number.base': 'total_correct must be a number.',
-                'number.min': 'total_correct must be at least 1.',
-                'number.max': 'total_correct cannot exceed 500.',
-            }),
-        date_completed: Joi.string().required().isoDate(),
-        exam: Joi.string().required(),
-    })
-        .options({ allowUnknown: false })
-        .validate(req.body);
-
-    if (error) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            error.details[0].message
-        );
-    }
-
-    if (!isValidpublicId(exam)) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Invalid Exam Id'
-        );
-    }
+    //validating result body
+    validateResultBody(req.body);
 
     let dbexam = await Exam.findOne({ public_id: exam }).select(
         'duration _id level total_marks total_questions is_deleted total_marks_per_question isSingleAttempt is_active'
@@ -74,45 +37,24 @@ const createResult = asyncHandler(async (req, res) => {
     }
 
     let student =await Student.findOne({public_id:req.user}).select("_id level").lean();
-
+ 
     if(student.level!=dbexam.level)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,`Cannot Create result of exam level:${exam.level} for student level:${student.level}`);
+        }
+
+        //if the assessment exam is been already attempted by student
+    if(dbexam.isSingleAttempt)
     {
-        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,`Cannot Create result of exam level:${exam.level} for student level:${student.level}`);
+        let resultCount=await Result.countDocuments({exam:dbexam._id,student:student._id});
+        if(resultCount>0)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.CONFLICT.code,"Cannot create result already attempted exam");
+        }
     }
-
-    if(!dbexam.is_active)
-    {
-        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Cannot create result of InActive Exam");
-    }
-    //validate result
-
-    if (time_taken > dbexam.duration) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            `Time Taken cannot be greater than exam duration of ${dbexam.duration}`
-        );
-    }
-
-    if (score > dbexam.total_marks) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Score cannot be greater than Exam Total Marks '
-        );
-    }
-
-    if (total_correct > dbexam.total_questions) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            'Total Correct cannot be greater than Total Questions'
-        );
-    }
-
-    if (total_correct * dbexam.total_marks_per_question != score) {
-        throw new Apierror(
-            HTTP_STATUS_CODES.BAD_REQUEST.code,
-            `Invalid score marks per question are ${dbexam.total_marks_per_question}`
-        );
-    }
+    
+   
+    validateResultDatawithExam(req.body,dbexam);
     let examDocId = dbexam._id;
     let studentDocId = student._id;
     const result = new Result({
@@ -127,6 +69,10 @@ const createResult = asyncHandler(async (req, res) => {
     return res
         .status(200)
         .json(new Apiresponse('Result created Successfully', 200));
+}else
+{
+    throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"Admin Cannot create result explicitly");
+}
 });
 
 const getResult = asyncHandler(async (req, res) => {
