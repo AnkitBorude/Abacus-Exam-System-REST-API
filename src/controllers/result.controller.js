@@ -9,7 +9,6 @@ import { HTTP_STATUS_CODES } from '../constants.js';
 import Joi from 'joi';
 import { Exam } from '../models/exam.model.js';
 import {
-    getDocumentIdfromPublicid,
     isValidpublicId,
 } from '../utils/publicId/validid.util.js';
 import { Student } from '../models/student.model.js';
@@ -26,7 +25,7 @@ const createResult = asyncHandler(async (req, res) => {
     }
 
     const { error } = Joi.object({
-        time_taken: Joi.number().integer().min(1).max(360).messages({
+        time_taken: Joi.number().integer().required().min(1).max(360).messages({
             'number.base': 'duration must be a number.',
             'number.min': 'duration must be at least 1.',
             'number.max': 'duration cannot exceed 360.',
@@ -47,7 +46,7 @@ const createResult = asyncHandler(async (req, res) => {
                 'number.max': 'total_correct cannot exceed 500.',
             }),
         date_completed: Joi.string().required().isoDate(),
-        exam: Joi.string(),
+        exam: Joi.string().required(),
     })
         .options({ allowUnknown: false })
         .validate(req.body);
@@ -67,13 +66,24 @@ const createResult = asyncHandler(async (req, res) => {
     }
 
     let dbexam = await Exam.findOne({ public_id: exam }).select(
-        'duration _id total_marks total_questions is_deleted total_marks_per_question'
-    );
+        'duration _id level total_marks total_questions is_deleted total_marks_per_question isSingleAttempt is_active'
+    ).lean();
 
     if (!dbexam || dbexam.is_deleted) {
         throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not found');
     }
 
+    let student =await Student.findOne({public_id:req.user}).select("_id level").lean();
+
+    if(student.level!=dbexam.level)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,`Cannot Create result of exam level:${exam.level} for student level:${student.level}`);
+    }
+
+    if(!dbexam.is_active)
+    {
+        throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Cannot create result of InActive Exam");
+    }
     //validate result
 
     if (time_taken > dbexam.duration) {
@@ -103,12 +113,8 @@ const createResult = asyncHandler(async (req, res) => {
             `Invalid score marks per question are ${dbexam.total_marks_per_question}`
         );
     }
-    let examDocId = await getDocumentIdfromPublicid(exam, Exam, 'exam');
-    let studentDocId = await getDocumentIdfromPublicid(
-        req.user,
-        Student,
-        'student'
-    );
+    let examDocId = dbexam._id;
+    let studentDocId = student._id;
     const result = new Result({
         score,
         time_taken,

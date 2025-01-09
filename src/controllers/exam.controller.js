@@ -475,7 +475,7 @@ const getAssessmentexamAnalytics = asyncHandler(async (req, res) => {
     if (!exam.isSingleAttempt) {
         throw new Apierror(
             HTTP_STATUS_CODES.NOT_FOUND.code,
-            'Given exam in the practice exam'
+            'Given exam is the practice exam'
         );
     }
 
@@ -618,11 +618,38 @@ const getQuestions = asyncHandler(async (req, res) => {
             'Invalid Exam Id'
         );
     }
-    let exam = await Exam.findOne({ public_id: examId });
-    let questions = exam.questions;
-    let transformedQuestions = questions.map((q) => q.toJSON());
+    let exam = await Exam.findOne({ public_id: examId }).select("is_deleted questions level is_active");
 
-    return res.status(200).json(new Apiresponse(transformedQuestions, 200));
+    if (!exam || exam.is_deleted) {
+        throw new Apierror(HTTP_STATUS_CODES.NOT_FOUND.code, 'Exam Not Found');
+    }
+
+    if(req.role=="admin"&& await isAdminOwnerofExam(req.user,examId))
+    {
+        let questions = exam.questions;
+        let transformedQuestions = questions.map((q) => q.toJSON());
+        return res.status(200).json(new Apiresponse(transformedQuestions, 200));
+    }
+    else if(req.role=="student")
+    {
+        if(!exam.is_active)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.BAD_REQUEST.code,"Cannot access questions of InActive Exam");
+        }
+        let student=await Student.findOne({public_id:req.user}).select("level").lean();
+        if(student.level!=exam.level)
+        {
+            throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,`Cannot access student level: ${student.level} questions of exam level ${exam.level} `);
+        }
+        let questions = exam.questions;
+        let transformedQuestions = questions.map((q) => q.toJSON());
+        return res.status(200).json(new Apiresponse(transformedQuestions, 200));
+    }else
+    {
+        throw new Apierror(HTTP_STATUS_CODES.FORBIDDEN.code,"You don't have required permissions to access questions");
+    }
+  
+   
 });
 
 const activateExam = asyncHandler(async (req, res) => {
@@ -1103,35 +1130,32 @@ const updateExam = asyncHandler(async (req, res) => {
 });
 
 const generateQuestions = asyncHandler(async (req, res) => {
-    //temporary putting the validation error handling out of request handling
-    //for testing purpose
+    console.log("Generating Questins");
+    let examId = req.params.examId;
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    if (!req.body || Object.keys(req.body).length === 0) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Request body cannot be empty.'
+        );
+    }
+    if (req.validationError) {
+        console.log(req.validationError);
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            req.validationError
+        );
+    }
 
-    if (req.role == 'admin') {
-        if (req.validationError) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                req.validationError
-            );
-        }
-        let examId = req.params.examId;
-        if (!req.body || Object.keys(req.body).length === 0) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Request body cannot be empty.'
-            );
-        }
-
-        if (!isValidpublicId(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
-            );
-        }
-        let userId = req.user;
-
+    if (req.role == 'admin' && await isAdminOwnerofExam(req.user,examId)) {
         const exists = await Exam.findOne({ public_id: examId })
             .lean()
-            .select('_id created_by');
+            .select('_id');
 
         if (!exists) {
             throw new Apierror(
@@ -1139,20 +1163,6 @@ const generateQuestions = asyncHandler(async (req, res) => {
                 'Exam Not Found'
             );
         }
-        let adminDocId = await getDocumentIdfromPublicid(
-            userId,
-            Admin,
-            'admin'
-        );
-        //check whether the admin is editing the exam which is only created by him
-        if (!exists.created_by.equals(adminDocId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.FORBIDDEN.code,
-                'Forbidden access to edit details of exam '
-            );
-        }
-
-        //in future need to add more validation using the joi
         const updatesTobeDone = Object.keys(req.body);
 
         const invalidFields = updatesTobeDone.filter(
@@ -1202,8 +1212,8 @@ const generateQuestions = asyncHandler(async (req, res) => {
         );
     } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.UNAUTHORIZED.code,
-            'Unauthorized cannot generate questions of the exam details'
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'You Don\'t have the required permissions to generate questions'
         );
     }
 });
