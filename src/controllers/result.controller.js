@@ -8,6 +8,7 @@ import { Pdftemplet } from '../pdftemplets/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import { Exam } from '../models/exam.model.js';
 import {
+    getDocumentIdfromPublicid,
     isValidpublicId,
 } from '../utils/publicId/validid.util.js';
 import { Student } from '../models/student.model.js';
@@ -77,13 +78,20 @@ const createResult = asyncHandler(async (req, res) => {
 
 const getResult = asyncHandler(async (req, res) => {
     let resultId = req.params.resultId;
+  
     if (!isValidpublicId(resultId)) {
         throw new Apierror(
             HTTP_STATUS_CODES.BAD_REQUEST.code,
             'Invalid Result Id'
         );
     }
-    let result = await Result.findOne({ public_id: resultId })
+    let query={public_id:resultId};
+    if(req.role=="student")
+    {
+        let student=await getDocumentIdfromPublicid(req.user,Student,"STUDENT");
+        query.student=student;
+    }
+    let result = await Result.findOne(query)
         .populate(
             'student exam',
             'fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question'
@@ -96,6 +104,9 @@ const getResult = asyncHandler(async (req, res) => {
     //check if the given route is the pdf route then
     //process the pdf
     let jsonResult = result.toJSON();
+    //masking public id
+    jsonResult.resultId=jsonResult.public_id;
+    delete jsonResult.public_id;
     delete jsonResult.student.student_id;
     if (req.query.format == 'pdf') {
         let myarray = flattenObject(jsonResult);
@@ -128,7 +139,7 @@ const getResult = asyncHandler(async (req, res) => {
 
         getPdf(req, res, templet);
     } else {
-        res.status(200).json(new Apiresponse(result.toJSON(), 200));
+        res.status(200).json(new Apiresponse(jsonResult, 200));
     }
 });
 
