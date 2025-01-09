@@ -1019,8 +1019,14 @@ const deleteResults = asyncHandler(async (req, res) => {
 });
 
 const updateExam = asyncHandler(async (req, res) => {
-    if (req.role == 'admin') {
-        let examId = req.params.examId;
+    let examId = req.params.examId;
+    if (!isValidpublicId(examId)) {
+        throw new Apierror(
+            HTTP_STATUS_CODES.BAD_REQUEST.code,
+            'Invalid Exam Id'
+        );
+    }
+    if (req.role == 'admin'&& await isAdminOwnerofExam(req.user,examId)) {
 
         if (req.validationError) {
             throw new Apierror(
@@ -1032,13 +1038,6 @@ const updateExam = asyncHandler(async (req, res) => {
             throw new Apierror(
                 HTTP_STATUS_CODES.BAD_REQUEST.code,
                 'Request body cannot be empty.'
-            );
-        }
-
-        if (!isValidpublicId(examId)) {
-            throw new Apierror(
-                HTTP_STATUS_CODES.BAD_REQUEST.code,
-                'Invalid Exam Id'
             );
         }
 
@@ -1097,8 +1096,8 @@ const updateExam = asyncHandler(async (req, res) => {
         );
     } else {
         throw new Apierror(
-            HTTP_STATUS_CODES.UNAUTHORIZED.code,
-            'Unauthorized cannot edit the exam details'
+            HTTP_STATUS_CODES.FORBIDDEN.code,
+            'You dont have permission to update this exam'
         );
     }
 });

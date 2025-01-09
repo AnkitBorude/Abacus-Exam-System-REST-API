@@ -19,6 +19,12 @@ app.use(morgan('common',{
     write:(message)=>logger.http(message)
 }
 }));
+//cache control header
+// app.use((req,res,next)=>{
+
+//     res.set('cache-control','public,max-age=3600,must-revalidate');
+//     next();
+// });
 app.use('/api/v1/student', studentRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/exam', examRouter);
