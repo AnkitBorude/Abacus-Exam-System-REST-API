@@ -5,7 +5,7 @@
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "NODE_ENV=production node ./src/index.js",
-        "dev": "nodemon ./src/index.js",
+        "dev": "node ./src/index.js",
         "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'",
         "prof": "node --prof ./src/index.js",
         "lint": "npx eslint .",
