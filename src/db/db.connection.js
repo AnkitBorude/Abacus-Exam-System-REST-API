@@ -6,15 +6,17 @@ import { logger } from '../../logger/index.logger.js';
 export async function getConnection() {
     try {
         let connectionInstance = await mongoose.connect(
-            `${process.env.MONGODB_CONNECTION_URL}/${config.get('DB.name')}`
+            `${process.env.MONGODB_CONNECTION_URL}/${config.get('DB.name')}`,
+            {
+                serverSelectionTimeoutMS:5000
+            }
         );
         logger.info(`MongoDB Database Connected :}`);
         let responseTime = (await getDbHealth()).responseTime;
         logger.info('Database Response Time:' + responseTime + ' ms');
         return connectionInstance;
     } catch (error) {
-        logger.error('MongoDB Connection Failed : ' + error);
-        throw error;
+        throw "MongoDB Error Message:"+error.message;
     }
 }
 mongoose.connection.on('connecting', () =>

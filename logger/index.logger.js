@@ -6,7 +6,6 @@ let logger=null;
    if (config.util.getEnv('NODE_ENV') == 'development') {
     
     logger= developmentLogger();
-    console.log("Developement Logger");
    }
    else if(config.util.getEnv('NODE_ENV') == 'production')
    {

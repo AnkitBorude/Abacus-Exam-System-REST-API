@@ -21,6 +21,7 @@ let getDbHealth = async () => {
         database = {
             status: 'disconnected',
             health: 'unhealthy',
+            error:dbError.message
         };
     }
     return database;
