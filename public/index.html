@@ -1,143 +1,152 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>API Documentation</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      padding: 0;
-      line-height: 1.6;
-      background-color: #f4f4f4;
-      color: #333;
-    }
-    header {
-      background: #0078d4;
-      color: #fff;
-      padding: 20px 10px;
-      text-align: center;
-    }
-    header h1 {
-      margin: 0;
-    }
-    .container {
-      padding: 20px;
-      max-width: 800px;
-      margin: 0 auto;
-      background: #fff;
-      box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-      border-radius: 5px;
-    }
-    .endpoint {
-      margin-bottom: 20px;
-    }
-    .endpoint h2 {
-      margin-bottom: 10px;
-      color: #0078d4;
-    }
-    .endpoint pre {
-      background: #f4f4f4;
-      padding: 10px;
-      border: 1px solid #ddd;
-      border-radius: 5px;
-      overflow-x: auto;
-    }
-    .endpoint code {
-      background: #eee;
-      padding: 2px 4px;
-      border-radius: 3px;
-      color: #0078d4;
-    }
-    footer {
-      text-align: center;
-      padding: 10px;
-      background: #333;
-      color: #fff;
-      position: fixed;
-      bottom: 0;
-      width: 100%;
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Abacus Exam System REST API</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
+    <style>
+        html{
+          height: 100%;
+        }
+        body{
+          height: 100%;
+        }
+        .bg-custom-dark {
+            background-color: #0e0b2a;
+            color: white;
+            height: 100%;
+        }
+        .bg-gradient {
+            background: linear-gradient(to right, #1890ff, #096dd9);
+            color: white;
+            padding: 2rem 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 0 1rem;
+        }
+
+        .profile-section {
+            display: flex;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .profile-info h1 {
+            color: white;
+            margin: 0.5rem 0.5rem;
+            font-size: 2.5rem;
+            transition: text-shadow 0.3s ease, color 0.3s ease;
+        }
+
+        .profile-info h1:hover {
+            text-shadow: 0 0 10px #fff;
+        }
+
+        .profile-info p {
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 1.25rem;
+            margin: 1rem 1rem;
+            transition: text-shadow 0.3s ease, color 0.3s ease;
+        }
+
+        .profile-info p:hover {
+            text-shadow: 0 0 10px #fff;
+        }
+        h2 {
+            margin: 0.5rem 0.5rem;
+            font-size: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+        }
+        .quick-links {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1.5rem;
+        }
+
+        .btn-primary {
+            background-color: white;
+            border-color: black;
+            color: black;
+            transition: background-color 0.8s ease, color 0.8s ease;
+        }
+
+        .btn-primary:hover {
+            background-color:  #0e0b2a;
+            border-color: wheat;
+            color:white;
+        }
+
+        .divider {
+            height: 1px;
+            background-color: rgba(255, 255, 255, 0.2);
+            margin: 1.5rem 0;
+        }
+
+        @media (min-width: 768px) {
+            .profile-section {
+                flex-direction: row;
+                text-align: left;
+                align-items: flex-start;
+            }
+
+            .quick-links {
+                justify-content: center;
+            }
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>API Documentation</h1>
-    <p>Your Guide to Using Our API</p>
-  </header>
-  <div class="container">
-    <div class="endpoint">
-      <h2>GET /api/v1/users</h2>
-      <p>Retrieve a list of all users.</p>
-      <pre><code>curl -X GET https://api.example.com/api/v1/users</code></pre>
-      <h3>Response:</h3>
-      <pre><code>
-[
-  {
-    "id": 1,
-    "name": "John Doe",
-    "email": "john.doe@example.com"
-  },
-  {
-    "id": 2,
-    "name": "Jane Smith",
-    "email": "jane.smith@example.com"
-  }
-]
-      </code></pre>
-    </div>
 
-    <div class="endpoint">
-      <h2>POST /api/v1/users</h2>
-      <p>Create a new user.</p>
-      <pre><code>curl -X POST https://api.example.com/api/v1/users -d '{
-  "name": "New User",
-  "email": "new.user@example.com"
-}'</code></pre>
-      <h3>Response:</h3>
-      <pre><code>
-{
-  "id": 3,
-  "name": "New User",
-  "email": "new.user@example.com",
-  "message": "User created successfully."
-}
-      </code></pre>
+<!-- Profile Section -->
+<div class="bg-custom-dark py-4">
+    <div class="container">
+        <div class="profile-section">
+            <div class="profile-info">
+                <h1>Abacus Exam System REST API</h1>
+                <p>Made with <i class="bi bi-heart-fill text-danger"></i> By Ankit Borude</p>
+            </div>
+        </div>
+        
+        <div class="card bg-custom-dark border-0 mb-3">
+            <div class="card-body">
+                <p class="text-white fs-6 mb-0">
+                    The Abacus Exam Web API is a comprehensive backend solution designed to streamline the management and evaluation of Abacus-based exams. This RESTful API provides a robust, scalable, and secure platform for handling exam-related operations, enabling developers to integrate its functionality into various front-end applications or third-party systems.
+                </p>
+            </div>
+        </div>
+        <div class="container">
+          <div class="quick-links">
+              <a href="https://ankitborude.github.io/Abacusexam-documentation" class="btn btn-primary rounded-pill">
+                  <i class="bi bi-book"></i> See Full API Documentation Here
+              </a>
+              <a href="https://github.com/AnkitBorude/Abacus-Exam-System-REST-API" class="btn btn-primary rounded-pill">
+                  <i class="bi bi-github"></i> View on GitHub
+              </a>
+          </div>
+      </div>
     </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    // Initialize carousel with auto-play
+    const carousel = new bootstrap.Carousel(document.querySelector('#mainCarousel'), {
+        interval: 1000,
+        wrap: true
+    });
+</script>
 
-    <div class="endpoint">
-      <h2>PUT /api/v1/users/:id</h2>
-      <p>Update an existing user.</p>
-      <pre><code>curl -X PUT https://api.example.com/api/v1/users/1 -d '{
-  "name": "Updated User",
-  "email": "updated.user@example.com"
-}'</code></pre>
-      <h3>Response:</h3>
-      <pre><code>
-{
-  "id": 1,
-  "name": "Updated User",
-  "email": "updated.user@example.com",
-  "message": "User updated successfully."
-}
-      </code></pre>
-    </div>
-
-    <div class="endpoint">
-      <h2>DELETE /api/v1/users/:id</h2>
-      <p>Delete a user by ID.</p>
-      <pre><code>curl -X DELETE https://api.example.com/api/v1/users/1</code></pre>
-      <h3>Response:</h3>
-      <pre><code>
-{
-  "message": "User deleted successfully."
-}
-      </code></pre>
-    </div>
-  </div>
-  <footer>
-    &copy; 2024 Your API Documentation. All rights reserved.
-  </footer>
 </body>
 </html>
