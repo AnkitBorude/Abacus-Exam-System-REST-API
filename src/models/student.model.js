@@ -16,6 +16,7 @@ const studentSchema = new mongoose.Schema(
             trim: true,
             minLength: MIN_USERNAME_LENGTH,
             unique: true,
+            index:true
         },
         email: {
             type: String,
@@ -38,6 +39,7 @@ const studentSchema = new mongoose.Schema(
         password: {
             type: String,
             required: [true, 'Password is required'],
+            index:true
         },
         is_deleted: {
             type: Boolean,
@@ -55,6 +57,7 @@ const studentSchema = new mongoose.Schema(
             type: String,
             trim: true,
             unique: true,
+            index:true
         },
     },
     { timestamps: true }
