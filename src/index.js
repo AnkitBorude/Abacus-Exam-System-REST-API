@@ -14,6 +14,8 @@ import { logger } from '../logger/index.logger.js';
  */
 let server;
 let mongoDatabaseInstance;
+//assign port from enviroment variable, else fall back to default application port
+let port = process.env.APPLICATION_PORT || config.get('Application.Port');
 try {
     logger.info('Starting Server Initialization...');
     logServerStart();
@@ -36,22 +38,22 @@ try {
     }
     //connecting to database
     mongoDatabaseInstance = await getConnection();
-    server = app.listen(config.get('Application.Port'), () => {
+    server = app.listen(port, () => {
         logger.info(
            
-                `Server is running on port ${config.get('Application.Port')}`
+                `Server is running on port ${port}`
         );
         if (config.util.getEnv('NODE_ENV') == 'development') {
           
                 logger.info(
-                    `Listening on Localhost -->  http://localhost:${config.get('Application.Port')}`
+                    `Listening on Localhost -->  http://localhost:${port}`
             );
           
                 logger.info(
-                    `Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get('Application.Port')}`
+                    `Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${port}`
                 );
         } else {
-            logger.verbose(`http://localhost:${config.get('Application.Port')}`);
+            logger.verbose(`http://localhost:${port}`);
         }
         
         logger.info('Successfully started server');

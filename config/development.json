@@ -7,5 +7,9 @@
     },
     "Password": {
         "saltingRounds": 2
+    },
+    "CORS":{
+        "allowedMethods":["GET","POST","PATCH","DELETE"],
+        "allowedHeaders":["Content-Type", "Authorization"]
     }
 }
