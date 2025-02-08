@@ -1,11 +1,11 @@
 {
     "name": "abacus-exam-backend",
-    "version": "1.0.0",
+    "version": "2.1.4",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
         "start": "NODE_ENV=production node ./src/index.js",
-        "dev": "node ./src/index.js",
+        "dev": "nodemon ./src/index.js",
         "dev1": "bash -c 'source .env && NODE_ENV=development node ./src/index.js'",
         "prof": "node --prof ./src/index.js",
         "lint": "npx eslint .",
@@ -15,14 +15,14 @@
         "db:dump": "node ./scripts/mongo-dump.js dump",
         "db:restore": "node ./scripts/mongo-dump.js restore"
     },
-    "author": "",
-    "license": "ISC",
-    "description": "",
+    "author": "Ankit Borude",
+    "license": "Apache-2.0",
+    "description": "abacus exam REST API",
     "type": "module",
     "dependencies": {
         "bcryptjs": "^2.4.3",
-        "chalk": "^5.3.0",
         "config": "^3.3.12",
+        "cors": "^2.8.5",
         "dotenv": "^16.4.5",
         "express": "^4.19.2",
         "helmet": "^8.0.0",

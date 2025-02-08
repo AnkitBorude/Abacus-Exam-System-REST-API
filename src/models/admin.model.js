@@ -17,6 +17,7 @@ const adminSchema = new mongoose.Schema(
             trim: true,
             minLength: MIN_USERNAME_LENGTH,
             unique: true,
+            index:true
         },
         email: {
             type: String,
@@ -27,7 +28,7 @@ const adminSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Password is required'],
+            required: [true, 'Password is required']
         },
         refreshToken: {
             type: String,
@@ -45,6 +46,7 @@ const adminSchema = new mongoose.Schema(
             type: String,
             trim: true,
             unique: true,
+            index:true
         },
     },
     { timestamps: true }
