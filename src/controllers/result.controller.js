@@ -4,7 +4,7 @@ import Apiresponse from '../utils/apiresponse.util.js';
 import { Result } from '../models/result.model.js';
 import { getPdf } from './pdf.controller.js';
 import { flattenObject } from '../utils/flattenObject.util.js';
-import { Pdftemplet } from '../pdftemplets/pdf.class.js';
+import { Pdftemplet } from '../utils/pdf/pdf.class.js';
 import { HTTP_STATUS_CODES } from '../constants.js';
 import { Exam } from '../models/exam.model.js';
 import {
@@ -94,7 +94,7 @@ const getResult = asyncHandler(async (req, res) => {
     let result = await Result.findOne(query)
         .populate(
             'student exam',
-            'fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question'
+            'fullname username email sclass level phone_no title duration total_questions total_marks total_marks_per_question public_id'
         )
         .select('-_id -__v')
         .select('+createdAt');

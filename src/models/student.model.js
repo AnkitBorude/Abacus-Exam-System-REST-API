@@ -38,8 +38,7 @@ const studentSchema = new mongoose.Schema(
         },
         password: {
             type: String,
-            required: [true, 'Password is required'],
-            index:true
+            required: [true, 'Password is required']
         },
         is_deleted: {
             type: Boolean,
@@ -64,10 +63,6 @@ const studentSchema = new mongoose.Schema(
 );
 
 studentSchema.set('toJSON', {
-    //doc: The original Mongoose document (before conversion).
-    //This includes all the data and Mongoose-specific features (like methods and virtuals).
-    //ret: The plain JavaScript object (the result of converting the Mongoose document).
-    // This is the object that will be transformed and returned.
 
     transform: (doc, rec) => {
         //avoiding this value to be sent along the response back
