@@ -1,6 +1,6 @@
 {
     "name": "abacus-exam-backend",
-    "version": "2.0.1",
+    "version": "2.1.4",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
@@ -15,9 +15,9 @@
         "db:dump": "node ./scripts/mongo-dump.js dump",
         "db:restore": "node ./scripts/mongo-dump.js restore"
     },
-    "author": "",
-    "license": "ISC",
-    "description": "",
+    "author": "Ankit Borude",
+    "license": "Apache-2.0",
+    "description": "abacus exam REST API",
     "type": "module",
     "dependencies": {
         "bcryptjs": "^2.4.3",

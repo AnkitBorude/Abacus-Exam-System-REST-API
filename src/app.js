@@ -22,7 +22,6 @@ console.log(whitelist);
 app.use(cors({
     origin:function(origin,callback)
     {
-        console.log("Incoming request detected.");
         if (whitelist.includes(origin) || !origin) {
             callback(null, true)
           } else {
