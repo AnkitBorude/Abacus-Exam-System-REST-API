@@ -80,13 +80,15 @@
             background-color: white;
             border-color: black;
             color: black;
-            transition: background-color 0.8s ease, color 0.8s ease;
+            transition: background-color 0.5s ease-in, color 0.5s ease-in;
+            transition: box-shadow 0.5s ease-in;
         }
 
         .btn-primary:hover {
             background-color:  #0e0b2a;
             border-color: wheat;
             color:white;
+            box-shadow: 0 0 10px #fff;
         }
 
         .divider {
@@ -115,6 +117,9 @@
     <div class="container">
         <div class="profile-section">
             <div class="profile-info">
+                <h1>
+                    Welcome
+                </h1>
                 <h1>Abacus Exam System REST API</h1>
                 <p>Made with <i class="bi bi-heart-fill text-danger"></i> By Ankit Borude</p>
             </div>
@@ -129,24 +134,22 @@
         </div>
         <div class="container">
           <div class="quick-links">
-              <a href="https://ankitborude.github.io/Abacusexam-documentation" class="btn btn-primary rounded-pill">
-                  <i class="bi bi-book"></i> See Full API Documentation Here
+              <a href="https://ankitborude.github.io/Abacusexam-documentation" class="btn btn-primary btn-lg rounded-pill">
+                  <i class="bi bi-book"></i> See Full Documentation Here
               </a>
-              <a href="https://github.com/AnkitBorude/Abacus-Exam-System-REST-API" class="btn btn-primary rounded-pill">
+              <a href="https://github.com/AnkitBorude/Abacus-Exam-System-REST-API" class="btn btn-primary btn-lg rounded-pill">
                   <i class="bi bi-github"></i> View on GitHub
               </a>
+              <a href="postman://app/workspaces/ed3e6cf3-a17f-47e4-8e5a-e112de9d3b45" class="btn btn-primary btn-lg rounded-pill">
+                Open with Postman
+                <i class="bi bi-box-arrow-up-right"></i>
+            </a>
           </div>
+      </div>
+      <div class="container quick-links">
+        <h3><i class="bi bi-c-circle"></i>Ankit Borude</h3>
       </div>
     </div>
 </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Initialize carousel with auto-play
-    const carousel = new bootstrap.Carousel(document.querySelector('#mainCarousel'), {
-        interval: 1000,
-        wrap: true
-    });
-</script>
-
 </body>
 </html>
