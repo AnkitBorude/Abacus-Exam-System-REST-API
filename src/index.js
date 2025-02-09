@@ -5,7 +5,6 @@ dotenv.config({
 });
 import { app } from './app.js';
 import { getConnection } from './db/db.connection.js';
-import { startLocalmongoDBserver } from './utils/localhost-mongodb.start.js';
 import os from 'node:os';
 import config from 'config';
 import { logger } from '../logger/index.logger.js';
@@ -21,20 +20,9 @@ try {
     logServerStart();
     //start localhost mongodb service
     if (config.util.getEnv('NODE_ENV') == 'development') {
-        try {
-            
-                    logger.verbose('Development Server: Executing MongoDB  service startup script');
-                    await startLocalmongoDBserver();
-        } catch (error) {
-           logger.error(error);
-           logger.warn('Try to manually start the mongodb service from system through command line');
-           
-        }
+        logger.verbose('Development Server: Connecting MongoDB from develpement url');
     } else {
-        
-            logger.verbose(
-                'Production Server: Connecting to MongoDB server on enviroment url...'
-        );
+        logger.verbose('Production Server: Connecting to MongoDB server on enviroment url...');
     }
     //connecting to database
     mongoDatabaseInstance = await getConnection();
