@@ -1,0 +1,27 @@
+services:
+  application:
+    build: 
+      context: .
+      args:
+        - NODE_ENV=development
+    env_file:
+      - .env
+    volumes:
+      - .:/opt/abacus-rest-api
+    #binding with passed port 
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    #binding the root folder so that any change the code without rebuilding 
+    depends_on:
+      - database
+    restart: unless-stopped
+    command: ["npm", "run", "dev"]
+  database:
+    image: mongo
+    ports:
+      - "27018:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+volumes:
+  mongodb_data:

@@ -66,7 +66,6 @@ app.get('/health', async (req, res) => {
         database: database,
     });
 });
-
 app.use((req, res, next) => {
     logger.warn(`The requested resource ${req.method} ${req.originalUrl} was not found on this server.`);
     res.status(404).json({

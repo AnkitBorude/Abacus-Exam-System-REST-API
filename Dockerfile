@@ -23,8 +23,7 @@ RUN if [ "$NODE_ENV" = "production" ]; then \
     else \
       npm ci; \
     fi && npm cache clean --force
-
-WORKDIR /opt/abacus-rest-api/app
+    
 COPY --chown=node:node . .
 
 ##CMD and ENTRYPOINT is not required as it startup command is depended upon the
