@@ -5,8 +5,6 @@ FROM node:23-slim
 ARG NODE_ENV=development
 # Persist NODE_ENV for runtime
 ENV NODE_ENV=${NODE_ENV}
-
-RUN npm install -g npm@latest
 #setting default user as node for container to avoid ROOT user fallback
 USER node
 

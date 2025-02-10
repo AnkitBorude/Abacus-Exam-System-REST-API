@@ -6,13 +6,12 @@ services:
         - NODE_ENV=production
     env_file:
       - .env
+      - .prod.env
     #binding with passed port 
     ports:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     depends_on:
       - database
-    environment:
-      - MONGODB_CONNECTION_URL="mongodb://database:27017"
     restart: unless-stopped
     logging:
       driver: "json-file"
@@ -26,14 +25,15 @@ services:
       timeout: 6s
       retries: 3
       start_period: 30s
-
     command: ["npm", "run", "start"]
   database:
     image: mongo
     ports:
-      - "30000:27017"
+      - "127.0.0.1:27017:27017"
     volumes:
       - mongodb_data:/data/db
+    env_file:
+      - .prod.env
     restart: always
 volumes:
   mongodb_data:

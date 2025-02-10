@@ -1,12 +1,11 @@
 import mongoose from 'mongoose';
 import process from 'node:process';
-import config from 'config';
 import getDbHealth from './db.health.js';
 import { logger } from '../../logger/index.logger.js';
 export async function getConnection() {
     try {
         let connectionInstance = await mongoose.connect(
-            `${process.env.MONGODB_CONNECTION_URL}/${config.get('DB.name')}`,
+            `${process.env.MONGODB_CONNECTION_URL}`,
             {
                 serverSelectionTimeoutMS:2000
             }
