@@ -1,0 +1,29 @@
+services:
+  application:
+    build: 
+      context: .
+      args:
+        - NODE_ENV=production
+    env_file:
+      - .env
+    #binding with passed port 
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    depends_on:
+      - database
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    command: ["npm", "run", "start"]
+  database:
+    image: mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    restart: always
+volumes:
+  mongodb_data:
