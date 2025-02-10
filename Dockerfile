@@ -1,6 +1,11 @@
 #installing node slim for minimal base image
 FROM node:23-slim
 
+USER root
+
+RUN apt-get update
+
+RUN apt-get install curl -y
 # Declare build argument (used during build)
 ARG NODE_ENV=development
 # Persist NODE_ENV for runtime

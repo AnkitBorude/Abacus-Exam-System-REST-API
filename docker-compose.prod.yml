@@ -7,7 +7,6 @@ services:
     env_file:
       - .env
       - .prod.env
-    #binding with passed port 
     ports:
       - "${APPLICATION_PORT}:${APPLICATION_PORT}"
     depends_on:
@@ -21,7 +20,7 @@ services:
 
     healthcheck:
       test: ["CMD", "curl", "-f", "--max-time", "3", "http://localhost:${APPLICATION_PORT}/health"]
-      interval: 1m30s
+      interval: 2m
       timeout: 6s
       retries: 3
       start_period: 30s
@@ -34,6 +33,8 @@ services:
       - mongodb_data:/data/db
     env_file:
       - .prod.env
+    logging:
+      driver: "none"
     restart: always
 volumes:
   mongodb_data:
