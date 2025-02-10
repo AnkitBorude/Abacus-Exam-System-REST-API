@@ -57,7 +57,11 @@ app.get('/health', async (req, res) => {
     let health = 'healthy';
     let database = await getDbHealth();
     health = database.health;
-    res.json({
+    let statusCode=200;
+    if (health!="healthy"){
+        statusCode=503;
+    }
+    res.status(statusCode).json({
         status: health,
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),

@@ -8,7 +8,7 @@ export async function getConnection() {
         let connectionInstance = await mongoose.connect(
             `${process.env.MONGODB_CONNECTION_URL}/${config.get('DB.name')}`,
             {
-                serverSelectionTimeoutMS:5000
+                serverSelectionTimeoutMS:2000
             }
         );
         logger.info(`MongoDB Database Connected :}`);
