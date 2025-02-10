@@ -5,7 +5,6 @@ dotenv.config({
 });
 import { app } from './app.js';
 import { getConnection } from './db/db.connection.js';
-import { startLocalmongoDBserver } from './utils/localhost-mongodb.start.js';
 import os from 'node:os';
 import config from 'config';
 import { logger } from '../logger/index.logger.js';
@@ -14,44 +13,35 @@ import { logger } from '../logger/index.logger.js';
  */
 let server;
 let mongoDatabaseInstance;
+//assign port from enviroment variable, else fall back to default application port
+let port = process.env.APPLICATION_PORT || config.get('Application.Port');
 try {
     logger.info('Starting Server Initialization...');
     logServerStart();
     //start localhost mongodb service
     if (config.util.getEnv('NODE_ENV') == 'development') {
-        try {
-            
-                    logger.verbose('Development Server: Executing MongoDB  service startup script');
-                    await startLocalmongoDBserver();
-        } catch (error) {
-           logger.error(error);
-           logger.warn('Try to manually start the mongodb service from system through command line');
-           
-        }
+        logger.verbose('Development Server: Connecting MongoDB from develpement url');
     } else {
-        
-            logger.verbose(
-                'Production Server: Connecting to MongoDB server on enviroment url...'
-        );
+        logger.verbose('Production Server: Connecting to MongoDB server on enviroment url...');
     }
     //connecting to database
     mongoDatabaseInstance = await getConnection();
-    server = app.listen(config.get('Application.Port'), () => {
+    server = app.listen(port, () => {
         logger.info(
            
-                `Server is running on port ${config.get('Application.Port')}`
+                `Server is running on port ${port}`
         );
         if (config.util.getEnv('NODE_ENV') == 'development') {
           
                 logger.info(
-                    `Listening on Localhost -->  http://localhost:${config.get('Application.Port')}`
+                    `Listening on Localhost -->  http://localhost:${port}`
             );
           
                 logger.info(
-                    `Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${config.get('Application.Port')}`
+                    `Listening on  Network   -->  http://${getIpAddresses()[0]?.address}:${port}`
                 );
         } else {
-            logger.verbose(`http://localhost:${config.get('Application.Port')}`);
+            logger.verbose(`http://localhost:${port}`);
         }
         
         logger.info('Successfully started server');

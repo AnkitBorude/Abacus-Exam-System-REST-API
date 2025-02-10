@@ -1,16 +1,23 @@
 import winston, { format } from "winston";
-import process from 'node:process';
 //accessing the log file path from the enviroment variable
-let filepath=process.env.COMBINED_LOG_PATH;
+
 export const productionLogger=()=>{
     let logger=  winston.createLogger({
         level:'debug',
+        //transporting to console to be easily collectible by docker container
         transports: [
-            new winston.transports.File({filename:filepath})],
+            new winston.transports.Console({
+                stderrLevels:['error']
+            })
+        ],
+        exceptionHandlers: [
+            new winston.transports.Console()
+        ],
         format:format.combine(
             format.timestamp(),
             format.json()
-        )
+        ),
+        exitOnError: false
     });
     return logger;
 };

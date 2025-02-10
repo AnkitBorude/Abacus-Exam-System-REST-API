@@ -32,6 +32,7 @@ const resultSchema = new mongoose.Schema(
             type: String,
             trim: true,
             unique: true,
+            index:true
         },
     },
     { timestamps: true }

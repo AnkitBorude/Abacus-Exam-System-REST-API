@@ -1,0 +1,42 @@
+services:
+  application:
+    build: 
+      context: .
+      args:
+        - NODE_ENV=production
+    env_file:
+      - .env
+      - .prod.env
+    ports:
+      - "${APPLICATION_PORT}:${APPLICATION_PORT}"
+    depends_on:
+      - database
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+    healthcheck:
+      test: ["CMD", "curl", "-f", "--max-time", "3", "http://localhost:${APPLICATION_PORT}/health"]
+      interval: 2m
+      timeout: 6s
+      retries: 3
+      start_period: 30s
+    command: ["npm", "run", "start"]
+  database:
+    image: mongo
+    ports:
+      - "127.0.0.1:27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    env_file:
+      - .prod.env
+    logging:
+      driver: "none"
+    restart: always
+volumes:
+  mongodb_data:
+
+##avoided mongodb database password and username because of complexity, but might later can cause the security reasons

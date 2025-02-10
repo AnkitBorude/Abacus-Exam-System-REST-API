@@ -1,4 +1,8 @@
 import express from 'express';
+import dotenv from 'dotenv';
+dotenv.config({
+    override: true,
+});
 import { studentRouter } from './routes/student.router.js';
 import { adminRouter } from './routes/admin.router.js';
 import { examRouter } from './routes/exam.router.js';
@@ -8,7 +12,25 @@ import getDbHealth from './db/db.health.js';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import { logger } from '../logger/index.logger.js';
+import cors from 'cors';
+import config from 'config';
+import Apierror from './utils/apierror.util.js';
 const app = express();
+
+var whitelist=process.env.CORS_WHITELIST?.split(",") || [];
+console.log(whitelist);
+app.use(cors({
+    origin:function(origin,callback)
+    {
+        if (whitelist.includes(origin) || !origin) {
+            callback(null, true)
+          } else {
+            callback(new Apierror(403,'Not allowed by CORS'))
+          }      
+    },
+    allowedHeaders:config.get('CORS.allowedHeaders'),
+    methods:config.get('CORS.allowedMethods')
+}));
 
 app.use(express.json());
 app.use(express.urlencoded());
@@ -19,12 +41,7 @@ app.use(morgan('common',{
     write:(message)=>logger.http(message)
 }
 }));
-//cache control header
-// app.use((req,res,next)=>{
 
-//     res.set('cache-control','public,max-age=3600,must-revalidate');
-//     next();
-// });
 app.use('/api/v1/student', studentRouter);
 app.use('/api/v1/admin', adminRouter);
 app.use('/api/v1/exam', examRouter);
@@ -40,7 +57,11 @@ app.get('/health', async (req, res) => {
     let health = 'healthy';
     let database = await getDbHealth();
     health = database.health;
-    res.json({
+    let statusCode=200;
+    if (health!="healthy"){
+        statusCode=503;
+    }
+    res.status(statusCode).json({
         status: health,
         timestamp: new Date().toISOString(),
         uptime: process.uptime(),
@@ -49,7 +70,6 @@ app.get('/health', async (req, res) => {
         database: database,
     });
 });
-
 app.use((req, res, next) => {
     logger.warn(`The requested resource ${req.method} ${req.originalUrl} was not found on this server.`);
     res.status(404).json({
@@ -62,11 +82,11 @@ app.use((req, res, next) => {
 app.use((err, req, res, next) => {
     // Handle all other errors
     logger.error(`Internal Error occurred: ${err.message}\n${err.stack}`);
-    res.status(err.status || 500).json({
+    res.status(err.statusCode || 500).json({
         error: 'Internal Server Error',
         message: err.message || 'An unexpected error occurred.',
         timestamp: new Date(),
-        statusCode:err.status || 500,
+        statusCode:err.statusCode || 500,
     });
     return next;
 });
